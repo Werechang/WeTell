@@ -1,6 +1,6 @@
 package com.gebb.wetell.client;
 
-import com.gebb.wetell.client.gui.LoginScene;
+import com.gebb.wetell.client.gui.SceneManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -12,8 +12,6 @@ public class WeTellClient extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        LoginScene login = new LoginScene();
-        login.setAsScene(stage);
-        stage.show();
+        SceneManager sceneManager = new SceneManager(stage);
     }
 }
