@@ -1,6 +1,5 @@
 package com.gebb.wetell.client.gui;
 
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -8,7 +7,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
 
 import java.util.Objects;
 
@@ -23,7 +21,7 @@ public class LoginScene extends Scene {
     public LoginScene(GridPane root) {
         super(root, 500, 300);
 
-        this.getStylesheets().add(Objects.requireNonNull(LoginScene.class.getResource("/com/gebb/wetell/stylesheets/login-dark.css")).toExternalForm());
+        this.getStylesheets().add(Objects.requireNonNull(LoginScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         Label loginTitle = new Label("Login | OurChat");
         loginTitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 20));

@@ -8,7 +8,6 @@ plugins {
 group 'com.gebb'
 version '1.0'
 
-sourceCompatibility = 1.15
 java {
     modularity.inferModulePath = true
 }
@@ -21,9 +20,6 @@ repositories {
 ext {
     junitVersion = '5.8.1'
 }
-
-sourceCompatibility = '15'
-targetCompatibility = '15'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -87,8 +83,8 @@ jlink {
             targetPlatformName = null
         }
         def imgType = currentOs.windows ? 'ico' : currentOs.macOsX ? 'icns' : 'png'
-        imageOptions += ['--icon', "src/main/resources/com/gebb/wetell/icons/wetell.$imgType"]
-        installerOptions += ['--resource-dir', "src/main/resources/com/gebb/wetell"]
+        imageOptions += ['--icon', "src/main/resources/com/gebb/wetell/client/gui/icons/wetell.$imgType"]
+        installerOptions += ['--resource-dir', "src/main/resources/com/gebb/wetell/client/gui"]
         installerOptions += ['--vendor', 'GEBB']
 
         if(currentOs.windows) {
