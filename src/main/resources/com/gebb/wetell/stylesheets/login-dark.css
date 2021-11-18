@@ -1,0 +1,32 @@
+@font-face {
+    -fx-font-family: SegoeUI;
+}
+#title {
+    -fx-text-fill: #e0e0e0;
+}
+#change:pressed{
+    -fx-text-fill: #00bada;
+}
+#change {
+    -fx-background-color: #26292c;
+    -fx-text-fill: #009aba;
+}
+.root {
+    -fx-background-color: #26292c;
+}
+.label {
+    -fx-text-fill: #c0c0c0;
+}
+.check-box {
+    -fx-text-fill: #c0c0c0;
+}
+.button {
+    -fx-text-fill: white;
+    -fx-background-color: #009aba;
+}
+.button:hover {
+    -fx-background-color: #00a4c4;
+}
+.button:pressed {
+    -fx-background-color: #008aaa;
+}

@@ -77,6 +77,15 @@ jlink {
         targetPlatformName = "win"
 
         def currentOs = org.gradle.internal.os.OperatingSystem.current()
+        if (currentOs.windows) {
+            targetPlatformName = "win"
+        } else if (currentOs.macOsX) {
+            targetPlatformName = "mac"
+        } else if (currentOs.linux) {
+            targetPlatformName = "lin"
+        } else {
+            targetPlatformName = null
+        }
         def imgType = currentOs.windows ? 'ico' : currentOs.macOsX ? 'icns' : 'png'
         imageOptions += ['--icon', "src/main/resources/com/gebb/wetell/icons/wetell.$imgType"]
         installerOptions += ['--resource-dir', "src/main/resources/com/gebb/wetell"]
