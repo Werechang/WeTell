@@ -14,6 +14,7 @@ java {
 modularity.disableEffectiveArgumentsAdjustment()
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 

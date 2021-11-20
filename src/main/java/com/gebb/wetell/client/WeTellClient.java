@@ -15,8 +15,10 @@ public class WeTellClient extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        // Window preparations
         stage.setTitle("WeTell");
-        stage.getIcons().add(new Image(Objects.requireNonNull(SceneManager.class.getResource("icons/wetell.png")).toExternalForm()));
+        stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
+
         SceneManager sceneManager = new SceneManager(stage, this);
     }
 }
