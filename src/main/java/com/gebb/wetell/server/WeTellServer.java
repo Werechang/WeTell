@@ -24,13 +24,23 @@ public class WeTellServer {
     }
 
     private void idle() {
-        while (running) {
-            try {
-                Socket socket = serverSocket.accept();
-                new ServerThread(socket).start();
-            } catch (IOException e) {
-                e.printStackTrace();
+        System.out.println("Waiting for connection...");
+        Thread idleThread = new Thread(() -> {
+            while (running) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    new ServerThread(socket).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        });
+        idleThread.start();
+        try {
+            idleThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        System.out.println("Stopping server...");
     }
 }
