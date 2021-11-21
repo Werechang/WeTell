@@ -4,8 +4,11 @@
 #title {
     -fx-text-fill: #e0e0e0;
 }
+#change:hover{
+    -fx-text-fill: #09a5c5;
+}
 #change:pressed{
-    -fx-text-fill: #00bada;
+    -fx-text-fill: #007a8a;
 }
 #change {
     -fx-background-color: #26292c;
@@ -28,5 +31,5 @@
     -fx-background-color: #00a4c4;
 }
 .button:pressed {
-    -fx-background-color: #008aaa;
+    -fx-background-color: #007a9a;
 }
