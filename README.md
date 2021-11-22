@@ -1,0 +1,17 @@
+# WeTell
+Encrypted Messenger
+
+# Building and IntelliJ setup
+## Building
+### Windows
+On windows open your command promt in the project folder and type in `.\gradlew.bat jpackage`
+You need to have "WiX" and Java 15 installed.
+### Linux/macOS
+For Linux and macOS you do the same only with `.\gradlew jpackage`. Java 15 is required.
+
+## IntelliJ setup
+Download and install Gradle 7.1.1. In IntelliJ go to 
+`File > Settings > Build, Execution, Deployment > Build Tools > Gradle` and choose `Specified Location` in the `Use Gradle from:` field. Click `Apply`. 
+The project should reload and you should be able to execute `WeTellClient.main()` or `WeTellServer.main()`
+
+For school PCs with minimum storage per account: Choose the desktop in the `Gradle user home:` field. You would have to redownload these files on every sign up.
