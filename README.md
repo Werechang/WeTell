@@ -16,4 +16,4 @@ If it still does not build follow these instructions:
 Go to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle` and choose `Specified Location` in the `Use Gradle from:` field. Click `Apply`. 
 The project should reload and you should be able to execute `WeTellClient.main()` or `WeTellServer.main()`
 
-For school PCs with minimum storage per account: Choose the desktop folder in the `Gradle user home:` field. You would have to redownload these files on every sign up.
+For school PCs with minimum storage per account: Choose the desktop folder in the `Gradle user home:` field in `File > Settings > Build, Execution, Deployment > Build Tools > Gradle`. You would have to redownload these files on every sign up.
