@@ -21,7 +21,7 @@ public class SceneManager {
         loginPane.setHgap(10);
         loginPane.setVgap(10);
         loginPane.setPadding(new Insets(25,25,25,25));
-        loginScene = new LoginScene(loginPane);
+        loginScene = new LoginScene(loginPane, client, this);
 
         // SignInScene
         GridPane signInPane = new GridPane();
@@ -29,7 +29,7 @@ public class SceneManager {
         signInPane.setHgap(10);
         signInPane.setVgap(10);
         signInPane.setPadding(new Insets(25,25,25,25));
-        signInScene = new SignInScene(signInPane);
+        signInScene = new SignInScene(signInPane, client, this);
 
         // Login is the first scene
         setScene(SceneType.LOGIN);

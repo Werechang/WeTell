@@ -4,26 +4,26 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class WeTellServer {
+public class WeTellServer extends ServerSocket {
 
     private ServerSocket serverSocket;
-    private boolean running = true;
+    private boolean running = false;
 
     public static void main(String[] args) {
         System.out.println("Starting server...");
-        new WeTellServer().start(8000);
-    }
-
-    private void start(int port) {
         try {
-            serverSocket = new ServerSocket(port);
+            new WeTellServer(8000).idle();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        idle();
+    }
+
+    public WeTellServer(int port) throws IOException {
+        super(port);
     }
 
     private void idle() {
+        running = true;
         System.out.println("Waiting for connection...");
         Thread idleThread = new Thread(() -> {
             while (running) {
