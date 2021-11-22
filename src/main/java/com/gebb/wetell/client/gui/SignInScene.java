@@ -22,7 +22,7 @@ public class SignInScene extends Scene {
         super(root, 500, 300);
         this.getStylesheets().add(Objects.requireNonNull(SignInScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
-        Label signInTitle = new Label("Sign In | OurChat");
+        Label signInTitle = new Label("Sign In | WeTell");
         signInTitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 20));
         signInTitle.setId("title");
         root.add(signInTitle, 0, 0, 2, 1);
