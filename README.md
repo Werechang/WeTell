@@ -13,7 +13,7 @@ For Linux and macOS you do the same only with `.\gradlew jpackage`. Java 15 is r
 Download and install Gradle 7.1.1. In IntelliJ open a new project with `Get from VCS`. [Specify this repository](https://github.com/Werechang/WeTell) in the URL field.
 It may import the project with some errors. Go to `File > Project Structure > Project` and choose JDK 15.
 
-If it still does not build follow these instructions:
+If it still does not build, follow these instructions:
 Go to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle` and choose `Specified Location` in the `Use Gradle from:` field. Click `Apply`. 
 The project should reload and you should be able to execute `WeTellClient.main()` or `WeTellServer.main()`
 
