@@ -11,10 +11,7 @@ public class ServerThread extends Thread {
 
     protected ServerThread(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        connect();
-    }
-
-    private void connect() {
+        // connect
         try {
             oos = new ObjectOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
             oos.flush();
@@ -22,7 +19,6 @@ public class ServerThread extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override

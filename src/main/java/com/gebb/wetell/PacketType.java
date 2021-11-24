@@ -2,8 +2,9 @@ package com.gebb.wetell;
 
 public enum PacketType {
     UNKNOWN(-1),
-    LOGIN(0),
-    MSG(1);
+    KEY(0),
+    LOGIN(1),
+    MSG(2);
 
     private final byte id;
 

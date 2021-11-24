@@ -6,7 +6,6 @@ import java.net.Socket;
 
 public class WeTellServer extends ServerSocket {
 
-    private ServerSocket serverSocket;
     private boolean running = false;
 
     public static void main(String[] args) {
@@ -28,7 +27,8 @@ public class WeTellServer extends ServerSocket {
         Thread idleThread = new Thread(() -> {
             while (running) {
                 try {
-                    Socket socket = serverSocket.accept();
+                    // Waiting to accept connection
+                    Socket socket = this.accept();
                     new ServerThread(socket).start();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -36,11 +36,11 @@ public class WeTellServer extends ServerSocket {
             }
         });
         idleThread.start();
+
         try {
             idleThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Stopping server...");
     }
 }
