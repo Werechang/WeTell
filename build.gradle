@@ -102,6 +102,7 @@ jlink {
 
 dependencies {
 
+    implementation 'org.jetbrains:annotations:22.0.0'
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation 'org.xerial:sqlite-jdbc:3.36.0.3'

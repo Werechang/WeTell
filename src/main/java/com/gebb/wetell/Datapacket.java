@@ -1,5 +1,8 @@
 package com.gebb.wetell;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -41,16 +44,20 @@ public class Datapacket implements Serializable {
      *             write serialization/deserialization helper methods in your Objects class.
      * @throws InvalidKeyException This should not happen. Make sure that you generated a PublicKey with the KeyPairManager.
      */
-    public Datapacket(PublicKey publicKey, PacketType type, byte... data) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    public Datapacket(@Nullable PublicKey publicKey, @NotNull PacketType type, byte... data) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         if (publicKey == null) {
+            // Don't encrypt
             encryptedData.add(new byte[]{type.getId()});
             encryptedData.add(data);
         } else {
             cipher.init(Cipher.PUBLIC_KEY, publicKey);
+            // Add PacketType first
             encryptedData.add(cipher.doFinal(new byte[]{type.getId()}));
-            // [size in bits] / 8 - 11(Padding)
+            // An asymmetric key cannot encrypt more than their length in bytes - 11.
+            // That's why the data gets written into an ArrayList of byte arrays.
             int maxArraySize = 245;
             for(int i = 0; i < data.length; i+= maxArraySize) {
+                // Prevent sending null data by checking the remaining length
                 if (i + maxArraySize > data.length) {
                     maxArraySize = data.length - i;
                 }
@@ -67,7 +74,7 @@ public class Datapacket implements Serializable {
      * @throws InvalidKeyException This should not happen. Make sure to use the PrivateKey that belongs to the
      *                             PublicKey passed into the constructor of this object.
      */
-    public PacketData getPacketData(PrivateKey privateKey) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    public @NotNull PacketData getPacketData(@Nullable PrivateKey privateKey) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         if (privateKey == null || privateKey.isDestroyed()) {
             // Tedious conversion from ArrayList of Object[] to one byte[]
             ByteArrayOutputStream bos = new ByteArrayOutputStream();

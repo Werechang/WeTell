@@ -1,5 +1,7 @@
 package com.gebb.wetell;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -9,7 +11,7 @@ public class KeyPairManager {
      * Generates an RSA keyPair of the length 2048 (bits).
      * @return KeyPair. Access the keys with KeyPair.getPrivate() and KeyPair.getPublic()
      */
-    public static KeyPair generateRSAKeyPair() {
+    public static @NotNull KeyPair generateRSAKeyPair() {
         KeyPairGenerator generator;
         // This algorithm should exist
         try {
@@ -19,7 +21,7 @@ public class KeyPairManager {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        throw new UnknownError();
+        throw new UnknownError("An unknown error occurred while generating an RSA key pair.");
     }
 
     /**
@@ -28,10 +30,7 @@ public class KeyPairManager {
      * @return The byte array of the X509 encoded key.
      * @throws NoSuchAlgorithmException If the key does not support encoding.
      */
-    public static byte[] RSAPublicKeyToByteStream(PublicKey key) throws NoSuchAlgorithmException {
-        if (key == null) {
-            throw new NullPointerException("The key should not be null");
-        }
+    public static byte[] RSAPublicKeyToByteStream(@NotNull PublicKey key) throws NoSuchAlgorithmException {
         if (key.getEncoded() == null) {
             // This should not happen
             throw new NoSuchAlgorithmException("The key does not support encoding");

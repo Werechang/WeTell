@@ -1,5 +1,7 @@
 package com.gebb.wetell;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PacketData {
 
     private final PacketType type;
@@ -7,15 +9,13 @@ public class PacketData {
 
     /**
      * For Datapacket's getData()
-     * @param type
-     * @param data
      */
-    public PacketData(PacketType type, byte... data) {
+    public PacketData(@NotNull PacketType type, byte... data) {
         this.type = type;
         this.data = data;
     }
 
-    public PacketType getType() {
+    public @NotNull PacketType getType() {
         return type;
     }
 

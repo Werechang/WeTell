@@ -1,10 +1,13 @@
 package com.gebb.wetell;
 
+import org.jetbrains.annotations.NotNull;
+
 public enum PacketType {
     UNKNOWN(-1),
     KEY(0),
-    LOGIN(1),
-    MSG(2);
+    KEYREQUEST(1),
+    LOGIN(2),
+    MSG(3);
 
     private final byte id;
 
@@ -19,7 +22,7 @@ public enum PacketType {
         return this.id;
     }
 
-    public static PacketType getTypeById(byte id) {
+    public static @NotNull PacketType getTypeById(byte id) {
         for (PacketType p : values()) {
             if (p.id == id) return p;
         }
