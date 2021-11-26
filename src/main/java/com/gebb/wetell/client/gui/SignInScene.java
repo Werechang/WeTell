@@ -10,7 +10,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 import java.util.Objects;
-// TODO Change structure of class
+
 public class SignInScene extends Scene {
 
     private final Label disconnectedS;

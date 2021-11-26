@@ -6,7 +6,6 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
-// TODO create this in WeTellClient, add methods for changing to a specific scene (more information on monday)
 public class SceneManager {
     
     private final LoginScene loginScene;
