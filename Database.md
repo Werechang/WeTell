@@ -2,7 +2,7 @@
 An overview of the tables with their respective attributes
 (Image)
 
-| Table | Attributes | description |
+| Table | Attributes | Description |
 |:------|:-----------|:------------|
 | users | id, name, hashedPassword, salt, profile_pic | passwords are hashed in the application with salt and pepper |
 | chats | id, profile_pic, name | name and profile_pic only for group chats |
