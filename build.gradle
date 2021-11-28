@@ -4,7 +4,10 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.9'
     id 'org.beryx.jlink' version '2.24.4'
     id 'idea'
+    id 'org.gradle.crypto.checksum' version '1.1.0'
 }
+
+import org.gradle.crypto.checksum.Checksum
 
 group 'com.gebb'
 version '1.0'
@@ -21,6 +24,18 @@ repositories {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+def currentOs = org.gradle.internal.os.OperatingSystem.current()
+
+task getOs() {
+    if (currentOs.windows)
+        return 'win'
+    else if (currentOs.linux)
+        return 'lin'
+    else if (currentOs.macOsX)
+        return 'mac'
+    return ''
 }
 
 application {
@@ -68,18 +83,15 @@ jlink {
         noConsole = true
     }
     jpackage {
-        targetPlatformName = "win"
+        if (currentOs.windows)
+            targetPlatformName = 'win'
+        else if (currentOs.linux)
+            targetPlatformName = 'lin'
+        else if (currentOs.macOsX)
+            targetPlatformName = 'mac'
+        else
+            targetPlatformName = ''
 
-        def currentOs = org.gradle.internal.os.OperatingSystem.current()
-        if (currentOs.windows) {
-            targetPlatformName = "win"
-        } else if (currentOs.macOsX) {
-            targetPlatformName = "mac"
-        } else if (currentOs.linux) {
-            targetPlatformName = "lin"
-        } else {
-            targetPlatformName = null
-        }
         def imgType = currentOs.windows ? 'ico' : currentOs.macOsX ? 'icns' : 'png'
         imageOptions += ['--icon', "src/main/resources/com/gebb/wetell/client/gui/icons/wetell.$imgType"]
         installerOptions += ['--resource-dir', "src/main/resources/com/gebb/wetell/client/gui"]
@@ -124,4 +136,38 @@ test {
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
+}
+
+task createChecksumSHA512(type: Checksum, dependsOn: 'jpackage') {
+    if (currentOs.windows) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.exe", "$buildDir/jpackage/WeTell-${version}.msi")
+    } else if (currentOs.macOsX) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.dmg")
+    } else if (currentOs.linux) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.tar.gz")
+    }
+    outputDir = new File("${buildDir}", "generatedChecksumsSHA512")
+    algorithm = Checksum.Algorithm.SHA512
+}
+
+
+task createChecksumMD5(type: Checksum, dependsOn: 'jpackage') {
+    if (currentOs.windows) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.exe", "$buildDir/jpackage/WeTell-${version}.msi")
+    } else if (currentOs.macOsX) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.dmg")
+    } else if (currentOs.linux) {
+        files = layout.files("$buildDir/jpackage/WeTell-${version}.tar.gz")
+    }
+    outputDir = new File("${buildDir}", "generatedChecksumsMD5")
+    algorithm = Checksum.Algorithm.MD5
+}
+
+task moveChecksums(type: Copy, dependsOn: ['createChecksumSHA512', 'createChecksumMD5']) {
+    from layout.buildDirectory.dir("generatedChecksumsSHA512"), layout.buildDirectory.dir("generatedChecksumsMD5")
+    into layout.buildDirectory.dir("checksums")
+}
+
+task generateChecksums(type: Delete, dependsOn: 'moveChecksums') {
+    delete layout.buildDirectory.dir("generatedChecksumsSHA512"), layout.buildDirectory.dir("generatedChecksumsMD5")
 }

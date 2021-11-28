@@ -21,7 +21,7 @@ public class KeyPairManager {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        throw new UnknownError("An unknown error occurred while generating an RSA key pair.");
+        throw new UnknownError("An error occurred while generating an RSA key pair.");
     }
 
     /**

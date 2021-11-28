@@ -1,9 +1,6 @@
 package com.gebb.wetell.client;
 
-import com.gebb.wetell.Datapacket;
-import com.gebb.wetell.IConnectable;
-import com.gebb.wetell.KeyPairManager;
-import com.gebb.wetell.PacketData;
+import com.gebb.wetell.*;
 import com.gebb.wetell.client.gui.SceneManager;
 import javafx.application.Application;
 import javafx.scene.image.Image;
@@ -12,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -29,8 +26,7 @@ public class WeTellClient extends Application implements IConnectable {
     private PublicKey serverKey;
     private Thread listenThread;
     private Socket socket;
-    private boolean isWaitingForConnection = true;
-    private boolean isReconnectThreadActive;
+    private boolean isWaitingForConnection;
 
     public static void main(String[] args) {
         launch(args);
@@ -40,12 +36,62 @@ public class WeTellClient extends Application implements IConnectable {
     public void start(Stage stage) {
         // Init keys
         keyPair = KeyPairManager.generateRSAKeyPair();
-
+        connect();
         // Window preparations
         stage.setTitle("WeTell");
         stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
 
         SceneManager sceneManager = new SceneManager(stage, this);
+    }
+
+    private void connect() {
+        try {
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress("localhost", 21345));
+            oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+            oos.flush();
+            ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+            isWaitingForConnection = false;
+            listen();
+        } catch (IOException e) {
+            // First try to connect
+            if (!isWaitingForConnection) {
+                isWaitingForConnection = true;
+                new Thread(() -> {
+                    while (isWaitingForConnection) {
+                        try {
+                            Thread.sleep(5000);
+                            connect();
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    private void listen() {
+        new Thread(() -> {
+            while (!isWaitingForConnection) {
+                try {
+                    Datapacket packet = (Datapacket) ois.readObject();
+                    if (packet != null) {
+                        execPacket(packet.getPacketData(null));
+                    }
+                    Thread.sleep(2000);
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    // Check if connection got closed
+                    if (e.getClass().getName().equals("java.io.EOFException") || e.getMessage().equals("Connection reset")) {
+                        connect();
+                    }
+                } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     @Override

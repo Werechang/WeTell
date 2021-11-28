@@ -1,13 +1,17 @@
 package com.gebb.wetell.server;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Scanner;
 
 public class WeTellServer extends ServerSocket {
 
-    private boolean running = false;
+    protected static boolean running = false;
     private final ArrayList<ServerThread> threads = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -41,13 +45,29 @@ public class WeTellServer extends ServerSocket {
             }
         });
         idleThread.start();
-
+        // Time buffer so that the other thread starts before we quit
         try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String s = scanner.nextLine();
+            if (Objects.equals(s, "q") || Objects.equals(s, "Q")) {
+                running = false;
+                System.out.println("Shutting down...");
+                break;
+            }
+        }
+        try {
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
             idleThread.join();
             for (ServerThread t : threads) {
                 t.join();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }

@@ -7,10 +7,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -19,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Datapacket implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 2L;
 
     private final ArrayList<byte[]> encryptedData = new ArrayList<>(2);
     private static Cipher cipher;
@@ -52,10 +51,13 @@ public class Datapacket implements Serializable {
         } else {
             cipher.init(Cipher.PUBLIC_KEY, publicKey);
             // Add PacketType first
+            int maxArraySize = 245;
+            // Reserve a size, so we don't have to make memcpy's
+            encryptedData.ensureCapacity(1 + (data.length/maxArraySize) + (data.length % maxArraySize == 0 ? 0 : 1));
+            // Add the type
             encryptedData.add(cipher.doFinal(new byte[]{type.getId()}));
             // An asymmetric key cannot encrypt more than their length in bytes - 11.
             // That's why the data gets written into an ArrayList of byte arrays.
-            int maxArraySize = 245;
             for(int i = 0; i < data.length; i+= maxArraySize) {
                 // Prevent sending null data by checking the remaining length
                 if (i + maxArraySize > data.length) {
