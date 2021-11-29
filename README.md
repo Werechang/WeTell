@@ -10,7 +10,7 @@ You need to have "WiX" and Java 15 installed.
 For Linux and macOS you do the same only with `.\gradlew jpackage`. Java 15 is required.
 
 ## IntelliJ setup
-Download and install Gradle 7.1.1. In IntelliJ open a new project with `Get from VCS`. [Specify this repository](https://github.com/Werechang/WeTell) in the URL field.
+Download and install Gradle 7.3. In IntelliJ open a new project with `Get from VCS`. [Specify this repository](https://github.com/Werechang/WeTell) in the URL field.
 It may import the project with some errors. Go to `File > Project Structure > Project` and choose JDK 15.
 
 If it still does not build, follow these instructions:
