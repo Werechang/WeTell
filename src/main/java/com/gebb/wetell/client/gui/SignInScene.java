@@ -45,7 +45,7 @@ public class SignInScene extends Scene {
         checkBox.setAlignment(Pos.CENTER_LEFT);
         checkBox.getChildren().add(savePassword);
         root.add(checkBox, 1, 3);*/
-
+        //Test
         changeToLogin = new Button("Login");
         changeToLogin.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 14));
         changeToLogin.setAlignment(Pos.CENTER_LEFT);
