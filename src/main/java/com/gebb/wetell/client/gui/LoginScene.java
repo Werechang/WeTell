@@ -53,7 +53,7 @@ public class LoginScene extends Scene {
         changeToSignIn.setId("change");
         changeToSignIn.setOnAction(event -> manager.setScene(SceneType.SIGNIN));
         root.add(changeToSignIn, 0, 4, 2,1);
-        //Test
+        
         loginButton = new Button("Login");
         loginButton.setPrefSize(60, 10);
         HBox buttonBox = new HBox(10);
