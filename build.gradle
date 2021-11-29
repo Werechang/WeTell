@@ -130,7 +130,7 @@ test {
     dependsOn 'cleanTest'
 
     useJUnitPlatform {
-        includeTags 'data'
+        includeTags 'gui'
     }
 
     testLogging {

@@ -1,5 +1,6 @@
 package com.gebb.wetell;
 
+import javafx.application.Application;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,5 +27,11 @@ public class Tests {
             Datapacket p = new Datapacket(k, PacketType.LOGIN, "WeTellUsNiceThings".getBytes(StandardCharsets.UTF_8));
             assertEquals(new String(p.getPacketData(kp.getPrivate()).getData(), StandardCharsets.UTF_8), "WeTellUsNiceThings");
         }
+    }
+
+    @Tag("gui")
+    @Test
+    public void testGUI() {
+        GUITest.initialize();
     }
 }
