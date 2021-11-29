@@ -40,24 +40,25 @@ public class SignInScene extends Scene {
         passwordFieldS = new PasswordField();
         root.add(passwordFieldS, 1, 2);
 
-        CheckBox savePassword = new CheckBox("Save Username and Password");
+        /*CheckBox savePassword = new CheckBox("Save Username and Password");
         HBox checkBox = new HBox();
         checkBox.setAlignment(Pos.CENTER_LEFT);
         checkBox.getChildren().add(savePassword);
-        root.add(checkBox, 1, 3);
+        root.add(checkBox, 1, 3);*/
 
         changeToLogin = new Button("Login");
         changeToLogin.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 14));
+        changeToLogin.setAlignment(Pos.CENTER_LEFT);
         changeToLogin.setId("change");
         changeToLogin.setOnAction(event -> manager.setScene(SceneType.LOGIN));
-        root.add(changeToLogin, 1, 4);
+        root.add(changeToLogin, 0, 4);
 
         signInButton = new Button("Sign In");
         signInButton.setPrefSize(60, 10);
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);
-        root.add(buttonBox, 1, 5);
+        root.add(buttonBox, 1, 4);
 
         disconnectedS = new Label("The Client is currently not connected to the Server");
         disconnectedS.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 10));
