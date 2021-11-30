@@ -16,7 +16,7 @@ public class KeyPairManager {
         // This algorithm should exist
         try {
             generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(2048);
+            generator.initialize(4096);
             return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();

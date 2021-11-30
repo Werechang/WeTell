@@ -51,7 +51,7 @@ public class Datapacket implements Serializable {
         } else {
             cipher.init(Cipher.PUBLIC_KEY, publicKey);
             // Add PacketType first
-            int maxArraySize = 245;
+            int maxArraySize = 501;
             // Reserve a size, so we don't have to make memcpy's
             encryptedData.ensureCapacity(1 + (data.length/maxArraySize) + (data.length % maxArraySize == 0 ? 0 : 1));
             // Add the type
