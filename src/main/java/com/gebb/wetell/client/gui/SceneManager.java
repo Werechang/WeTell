@@ -10,6 +10,7 @@ public class SceneManager {
     
     private final LoginScene loginScene;
     private final SignInScene signInScene;
+    private final MessageScene messageScene;
     private final Stage stage;
     
     public SceneManager(Stage stage, WeTellClient client) {
@@ -30,6 +31,14 @@ public class SceneManager {
         signInPane.setPadding(new Insets(25,25,25,25));
         signInScene = new SignInScene(signInPane, client, this);
 
+        // MessageScene
+        GridPane messagePane = new GridPane();
+        messageScene.setAlignment(Pos.CENTER);
+        messageScene.setHgap(10);
+        messageScene.setVgap(10);
+        messageScene.setPadding(new Insets(25,25,25,25));
+        messageScene = new MessageScene(messagePane, client, this);
+
         // Login is the first scene
         setScene(SceneType.LOGIN);
         stage.show();
@@ -39,7 +48,7 @@ public class SceneManager {
         switch (type) {
             case LOGIN -> stage.setScene(loginScene);
             case SIGNIN -> stage.setScene(signInScene);
-            case MESSAGE -> stage.setScene(null);
+            case MESSAGE -> stage.setScene(messageScene);
         }
     }
 }

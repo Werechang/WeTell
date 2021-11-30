@@ -62,9 +62,9 @@ public class LoginScene extends Scene {
         root.add(buttonBox, 1, 4);
 
         disconnected = new Label("The Client is currently not connected to the Server");
-        disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 10));
+        disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 11));
         disconnected.setVisible(false);
-        root.add(disconnected, 1, 6);
+        root.add(disconnected, 0, 6, 2, 1);
     }
 
     public Label getDisconnectedLabel() {
