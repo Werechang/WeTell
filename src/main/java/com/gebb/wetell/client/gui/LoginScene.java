@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.util.Objects;
@@ -23,6 +24,7 @@ public class LoginScene extends Scene {
         root.add(loginTitle, 0, 0, 2, 1);
 
         Label username = new Label("Username");
+        //username.setMinWidth(Region.USE_PREF_SIZE); //label doesn't become smaller than content -> fix window size
         root.add(username, 0, 1);
 
         TextField userTextField = new TextField();

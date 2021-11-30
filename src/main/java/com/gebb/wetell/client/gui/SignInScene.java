@@ -14,6 +14,7 @@ public class SignInScene extends Scene {
 
     public SignInScene(GridPane root, WeTellClient client, SceneManager manager) {
         super(root, 500, 300);
+        
         this.getStylesheets().add(Objects.requireNonNull(SignInScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         Label signInTitle = new Label("Sign In | WeTell");
