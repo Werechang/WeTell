@@ -7,7 +7,8 @@ public enum PacketType {
     KEY(0),
     KEYREQUEST(1),
     LOGIN(2),
-    MSG(3);
+    MSG(3),
+    ERROR_NO_DATA(4);
 
     private final byte id;
 
