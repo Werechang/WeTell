@@ -15,6 +15,7 @@ public class SceneManager {
     
     public SceneManager(Stage stage, WeTellClient client) {
         this.stage = stage;
+        stage.setOnCloseRequest(event -> client.prepareClose());
         // LoginScene
         GridPane loginPane = new GridPane();
         loginPane.setAlignment(Pos.CENTER);

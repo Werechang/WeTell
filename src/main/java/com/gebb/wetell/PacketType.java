@@ -12,7 +12,8 @@ public enum PacketType {
     ERROR_NO_ACCOUNT(5),
     ERROR_INVALID_LOGIN(6),
     ERROR_NOT_LOGGED_IN(7),
-    NOTIFICATION(8);
+    NOTIFICATION(8),
+    CLOSE_CONNECTION(9);
 
     private final byte id;
 

@@ -27,6 +27,7 @@ public class WeTellClient extends Application implements IConnectable {
     private Thread listenThread;
     private Socket socket;
     private boolean isWaitingForConnection;
+    private boolean isCloseRequest;
 
     public static void main(String[] args) {
         launch(args);
@@ -34,6 +35,7 @@ public class WeTellClient extends Application implements IConnectable {
 
     @Override
     public void start(Stage stage) {
+        // TODO Replace Thread.sleep with better interrupt
         // Init keys
         keyPair = KeyPairManager.generateRSAKeyPair();
         connect();
@@ -58,9 +60,9 @@ public class WeTellClient extends Application implements IConnectable {
             if (!isWaitingForConnection) {
                 isWaitingForConnection = true;
                 new Thread(() -> {
-                    while (isWaitingForConnection) {
+                    while (isWaitingForConnection && !isCloseRequest) {
                         try {
-                            Thread.sleep(5000);
+                            Thread.sleep(1000);
                             connect();
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
@@ -74,7 +76,7 @@ public class WeTellClient extends Application implements IConnectable {
 
     private void listen() {
         new Thread(() -> {
-            while (!isWaitingForConnection) {
+            while (!isWaitingForConnection && !isCloseRequest) {
                 try {
                     Datapacket packet = (Datapacket) ois.readObject();
                     if (packet != null) {
@@ -92,6 +94,17 @@ public class WeTellClient extends Application implements IConnectable {
                 }
             }
         }).start();
+    }
+
+    public void prepareClose() {
+        isCloseRequest = true;
+        if (listenThread != null) {
+            try {
+                listenThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
