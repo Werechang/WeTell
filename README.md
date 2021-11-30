@@ -14,7 +14,7 @@ Download and install Gradle 7.3. In IntelliJ open a new project with `Get from V
 It may import the project with some errors. Go to `File > Project Structure > Project` and choose JDK 15.
 
 If it still does not build, follow these instructions:
-Go to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle` and choose `Specified Location` in the `Use Gradle from:` field. Click `Apply`. 
+Go to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle` and choose `Specified Location` in the `Use Gradle from:` field (default is 'gradle-wrapper.properties' file). Click `Apply`. Now download and extract [this]()
 The project should reload and you should be able to execute `WeTellClient.main()` or `WeTellServer.main()`
 
 For school PCs with minimum storage per account: Choose the desktop folder in the `Gradle user home:` field in `File > Settings > Build, Execution, Deployment > Build Tools > Gradle`. You would have to redownload these files on every sign up.
