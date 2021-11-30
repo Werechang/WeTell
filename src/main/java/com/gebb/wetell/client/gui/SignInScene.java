@@ -33,11 +33,11 @@ public class SignInScene extends Scene {
         PasswordField passwordField = new PasswordField();
         root.add(passwordField, 1, 2);
 
-        /*CheckBox savePassword = new CheckBox("Save Username and Password");
+        CheckBox savePassword = new CheckBox("Save Username and Password");
         HBox checkBox = new HBox();
         checkBox.setAlignment(Pos.CENTER_LEFT);
         checkBox.getChildren().add(savePassword);
-        root.add(checkBox, 1, 3);*/
+        root.add(checkBox, 1, 3);
 
         Button changeToLogin = new Button("Login");
         changeToLogin.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 14));
