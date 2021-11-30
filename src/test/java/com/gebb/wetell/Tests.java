@@ -31,7 +31,7 @@ public class Tests {
 
     @Tag("gui")
     @Test
-   /* public void testGUI() {
+    public void testGUI() {
         GUITest.initialize();
-    }*/
+    }
 }

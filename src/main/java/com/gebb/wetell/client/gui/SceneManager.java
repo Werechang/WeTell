@@ -33,10 +33,10 @@ public class SceneManager {
 
         // MessageScene
         GridPane messagePane = new GridPane();
-        messageScene.setAlignment(Pos.CENTER);
-        messageScene.setHgap(10);
-        messageScene.setVgap(10);
-        messageScene.setPadding(new Insets(25,25,25,25));
+        messagePane.setAlignment(Pos.CENTER);
+        messagePane.setHgap(10);
+        messagePane.setVgap(10);
+        messagePane.setPadding(new Insets(25,25,25,25));
         messageScene = new MessageScene(messagePane, client, this);
 
         // Login is the first scene
