@@ -54,7 +54,7 @@ public class WeTellClient extends Application implements IConnectable {
             isWaitingForConnection = false;
             listen();
         } catch (IOException e) {
-            // First try to connect
+            // if thread is not already running
             if (!isWaitingForConnection) {
                 isWaitingForConnection = true;
                 new Thread(() -> {

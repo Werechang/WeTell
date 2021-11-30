@@ -10,13 +10,15 @@ import javafx.stage.Stage;
 import java.util.Objects;
 
 public class GUITest extends Application {
+    @Override
+    public void start(Stage stage) throws Exception {
+        stage.setTitle("WeTell");
+        stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
 
-    private final Label username;
+        SceneManager sceneManager = new SceneManager(stage, null);
+    }
 
-    public GUITest(GridPane root, WeTellClient client, SceneManager manager) {
-        super(root, 500, 300);
-
-        Label username = new Label("Username");
-
-
+    public static void initialize() {
+        launch();
+    }
 }
