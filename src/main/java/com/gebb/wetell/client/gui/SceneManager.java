@@ -16,6 +16,11 @@ public class SceneManager {
     public SceneManager(Stage stage, WeTellClient client) {
         this.stage = stage;
         stage.setOnCloseRequest(event -> client.prepareClose());
+        stage.setHeight(700);
+        stage.setWidth(1000);
+        stage.setMinHeight(300);
+        stage.setMinWidth(400);
+
         // LoginScene
         GridPane loginPane = new GridPane();
         loginPane.setAlignment(Pos.CENTER);
@@ -43,6 +48,7 @@ public class SceneManager {
         // Login is the first scene
         setScene(SceneType.LOGIN);
         stage.show();
+
     }
     
     public void setScene(SceneType type) {

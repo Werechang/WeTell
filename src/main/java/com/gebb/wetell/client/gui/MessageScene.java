@@ -10,7 +10,7 @@ import javafx.scene.text.FontWeight;
 public class MessageScene extends Scene {
 
     public MessageScene(GridPane root, WeTellClient client, SceneManager manager) {
-        super(root, 800, 500);
+        super(root);
         //this.getStylesheets().add(Objects.requireNonNull(MessageScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         Label disconnected = new Label("The Client is currently not connected to the Server");

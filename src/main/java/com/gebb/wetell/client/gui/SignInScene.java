@@ -1,6 +1,7 @@
 package com.gebb.wetell.client.gui;
 
 import com.gebb.wetell.client.WeTellClient;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -13,8 +14,7 @@ import java.util.Objects;
 public class SignInScene extends Scene {
 
     public SignInScene(GridPane root, WeTellClient client, SceneManager manager) {
-        super(root, 500, 300);
-        
+        super(root);
         this.getStylesheets().add(Objects.requireNonNull(SignInScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         Label signInTitle = new Label("Sign In | WeTell");
@@ -41,22 +41,24 @@ public class SignInScene extends Scene {
         root.add(checkBox, 1, 3);
 
         Button changeToLogin = new Button("Login");
-        changeToLogin.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 14));
+        changeToLogin.setPrefSize(60, 10);
+        changeToLogin.setPadding(new Insets(2, 5, 5, 5));
         changeToLogin.setAlignment(Pos.CENTER_LEFT);
         changeToLogin.setId("change");
         changeToLogin.setOnAction(event -> manager.setScene(SceneType.LOGIN));
-        root.add(changeToLogin, 0, 4);
+        root.add(changeToLogin, 0, 4, 2,1);
 
         Button signInButton = new Button("Sign In");
         signInButton.setPrefSize(60, 10);
+        signInButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //Attention Logic
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);
         root.add(buttonBox, 1, 4);
 
         Label disconnected = new Label("The Client is currently not connected to the Server");
-        disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 10));
+        disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 11));
         disconnected.setVisible(false);
-        root.add(disconnected, 1, 6);
+        root.add(disconnected, 0, 6, 2, 1);
     }
 }
