@@ -1,6 +1,6 @@
 package com.gebb.wetell.client.gui;
 
-import com.gebb.wetell.client.WeTellClient;
+import com.gebb.wetell.client.IGUICallable;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -9,7 +9,7 @@ import javafx.scene.text.FontWeight;
 
 public class MessageScene extends Scene {
 
-    public MessageScene(GridPane root, WeTellClient client, SceneManager manager) {
+    public MessageScene(GridPane root, IGUICallable callable, SceneManager manager) {
         super(root);
         //this.getStylesheets().add(Objects.requireNonNull(MessageScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 

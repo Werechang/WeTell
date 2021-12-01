@@ -1,6 +1,6 @@
 package com.gebb.wetell.client.gui;
 
-import com.gebb.wetell.client.WeTellClient;
+import com.gebb.wetell.client.IGUICallable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
@@ -13,11 +13,9 @@ public class SceneManager {
     private final MessageScene messageScene;
     private final Stage stage;
     
-    public SceneManager(Stage stage, WeTellClient client) {
+    public SceneManager(Stage stage, IGUICallable callable) {
         this.stage = stage;
-        if (client != null) {
-            stage.setOnCloseRequest(event -> client.prepareClose());
-        }
+        stage.setOnCloseRequest(event -> callable.prepareClose());
         stage.setHeight(700);
         stage.setWidth(1000);
         stage.setMinHeight(300);
@@ -29,7 +27,7 @@ public class SceneManager {
         loginPane.setHgap(10);
         loginPane.setVgap(10);
         loginPane.setPadding(new Insets(25,25,25,25));
-        loginScene = new LoginScene(loginPane, client, this);
+        loginScene = new LoginScene(loginPane, callable, this);
 
         // SignInScene
         GridPane signInPane = new GridPane();
@@ -37,7 +35,7 @@ public class SceneManager {
         signInPane.setHgap(10);
         signInPane.setVgap(10);
         signInPane.setPadding(new Insets(25,25,25,25));
-        signInScene = new SignInScene(signInPane, client, this);
+        signInScene = new SignInScene(signInPane, callable, this);
 
         // MessageScene
         GridPane messagePane = new GridPane();
@@ -45,7 +43,7 @@ public class SceneManager {
         messagePane.setHgap(10);
         messagePane.setVgap(10);
         messagePane.setPadding(new Insets(25,25,25,25));
-        messageScene = new MessageScene(messagePane, client, this);
+        messageScene = new MessageScene(messagePane, callable, this);
 
         // Login is the first scene
         setScene(SceneType.LOGIN);

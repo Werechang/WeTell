@@ -18,7 +18,7 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Objects;
 
-public class WeTellClient extends Application implements IConnectable {
+public class WeTellClient extends Application implements IConnectable, IGUICallable {
 
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
@@ -105,6 +105,11 @@ public class WeTellClient extends Application implements IConnectable {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void onLoginPress(String username, String password) {
+
     }
 
     @Override

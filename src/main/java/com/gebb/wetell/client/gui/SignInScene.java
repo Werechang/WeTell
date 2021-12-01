@@ -1,6 +1,6 @@
 package com.gebb.wetell.client.gui;
 
-import com.gebb.wetell.client.WeTellClient;
+import com.gebb.wetell.client.IGUICallable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 public class SignInScene extends Scene {
 
-    public SignInScene(GridPane root, WeTellClient client, SceneManager manager) {
+    public SignInScene(GridPane root, IGUICallable callable, SceneManager manager) {
         super(root);
         this.getStylesheets().add(Objects.requireNonNull(SignInScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
@@ -50,7 +50,7 @@ public class SignInScene extends Scene {
 
         Button signInButton = new Button("Sign In");
         signInButton.setPrefSize(60, 10);
-        signInButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //TODO Attention Logic
+        signInButton.setOnAction(event -> callable.onLoginPress(null, null)); //TODO Attention Logic
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);
