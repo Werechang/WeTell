@@ -46,11 +46,11 @@ public class SignInScene extends Scene {
         changeToLogin.setAlignment(Pos.CENTER_LEFT);
         changeToLogin.setId("change");
         changeToLogin.setOnAction(event -> manager.setScene(SceneType.LOGIN));
-        root.add(changeToLogin, 0, 4, 2,1);
+        root.add(changeToLogin, 0, 4, 2, 1);
 
         Button signInButton = new Button("Sign In");
         signInButton.setPrefSize(60, 10);
-        signInButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //Attention Logic
+        signInButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //TODO Attention Logic
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);

@@ -52,7 +52,7 @@ public class LoginScene extends Scene {
 
         Button loginButton = new Button("Login");
         loginButton.setPrefSize(60, 10);
-        loginButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //Attention Logic
+        loginButton.setOnAction(event -> manager.setScene(SceneType.MESSAGE)); //TODO Attention Logic
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(loginButton);
