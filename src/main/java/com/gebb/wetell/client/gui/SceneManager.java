@@ -15,7 +15,9 @@ public class SceneManager {
     
     public SceneManager(Stage stage, WeTellClient client) {
         this.stage = stage;
-        stage.setOnCloseRequest(event -> client.prepareClose());
+        if (client != null) {
+            stage.setOnCloseRequest(event -> client.prepareClose());
+        }
         stage.setHeight(700);
         stage.setWidth(1000);
         stage.setMinHeight(300);
@@ -48,7 +50,6 @@ public class SceneManager {
         // Login is the first scene
         setScene(SceneType.LOGIN);
         stage.show();
-
     }
     
     public void setScene(SceneType type) {

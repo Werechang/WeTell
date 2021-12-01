@@ -8,12 +8,10 @@ public enum PacketType {
     KEYREQUEST(1),
     LOGIN(2),
     MSG(3),
-    ERROR_NO_DATA(4),
-    ERROR_NO_ACCOUNT(5),
-    ERROR_INVALID_LOGIN(6),
-    ERROR_NOT_LOGGED_IN(7),
-    NOTIFICATION(8),
-    CLOSE_CONNECTION(9);
+    ERROR(4),
+    SUCCESS(5),
+    NOTIFICATION(6),
+    CLOSE_CONNECTION(7);
 
     private final byte id;
 
