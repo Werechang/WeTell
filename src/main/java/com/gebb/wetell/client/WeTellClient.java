@@ -109,7 +109,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLoginPress(String username, String password) {
-
+        //TODO Attention Logic
     }
 
     @Override

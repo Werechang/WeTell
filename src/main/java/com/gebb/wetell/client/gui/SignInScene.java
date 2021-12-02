@@ -50,7 +50,7 @@ public class SignInScene extends Scene {
 
         Button signInButton = new Button("Sign In");
         signInButton.setPrefSize(60, 10);
-        signInButton.setOnAction(event -> callable.onLoginPress(null, null)); //TODO Attention Logic
+        signInButton.setOnAction(event -> callable.onLoginPress(null, null));
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);

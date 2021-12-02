@@ -43,6 +43,7 @@ public class SceneManager {
         messagePane.setHgap(10);
         messagePane.setVgap(10);
         messagePane.setPadding(new Insets(25,25,25,25));
+        messagePane.setGridLinesVisible(true);
         messageScene = new MessageScene(messagePane, callable, this);
 
         // Login is the first scene

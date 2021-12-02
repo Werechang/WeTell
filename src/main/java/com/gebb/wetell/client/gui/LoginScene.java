@@ -24,7 +24,6 @@ public class LoginScene extends Scene {
         root.add(loginTitle, 0, 0, 2, 1);
 
         Label username = new Label("Username");
-        //username.setMinWidth(Region.USE_PREF_SIZE); //label doesn't become smaller than content -> fix window size
         root.add(username, 0, 1);
 
         TextField userTextField = new TextField();
@@ -52,7 +51,7 @@ public class LoginScene extends Scene {
 
         Button loginButton = new Button("Login");
         loginButton.setPrefSize(60, 10);
-        loginButton.setOnAction(event -> callable.onLoginPress(null, null)); //TODO Attention Logic
+        loginButton.setOnAction(event -> callable.onLoginPress(null, null));
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(loginButton);
