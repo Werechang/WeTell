@@ -1,29 +1,32 @@
 package com.gebb.wetell.server;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class WeTellServer extends ServerSocket {
 
     protected static boolean running = false;
-    private final ArrayList<ServerThread> threads = new ArrayList<>();
+    private final HashMap<Long, ServerThread> threads = new HashMap<>();
+    private static WeTellServer server = null;
+
+    private final Queue<ServerThread> closeThreadQueue = new ConcurrentLinkedQueue<>();
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     public static void main(String[] args) {
-        System.out.println("Starting server...");
         try {
-            new WeTellServer(21394).idle();
+            server = new WeTellServer(80);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("Starting server...");
+        WeTellServer.getInstance().idle();
     }
 
-    public WeTellServer(int port) throws IOException {
+    private WeTellServer(int port) throws IOException {
         super(port);
     }
 
@@ -35,16 +38,34 @@ public class WeTellServer extends ServerSocket {
                 try {
                     // Waiting to accept connection
                     Socket socket = this.accept();
-                    threads.add(new ServerThread(socket));
+                    ServerThread t = new ServerThread(socket);
+                    threads.put(t.getId(), t);
                     System.out.println("Accepted connection");
                     // get last element and start it
-                    threads.get(threads.size()-1).start();
+                    t.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
         idleThread.start();
+        // Thread that kills threads from the stopQueue
+        new Thread(() -> {
+            while (running) {
+                try {
+                    latch.await();
+                    // Wait for every Thread to close
+                    Thread.sleep(10);
+                    Iterator<ServerThread> it = closeThreadQueue.iterator();
+                    while (it.hasNext()) {
+                        threads.remove(it.next().getId());
+                        it.remove();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
         // Time buffer so that the other thread starts before we quit
         try {
             Thread.sleep(1000);
@@ -61,14 +82,24 @@ public class WeTellServer extends ServerSocket {
             }
         }
         try {
-            Socket s = new Socket();
-            s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
+            //Socket s = new Socket();
+            //s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
             idleThread.join();
-            for (ServerThread t : threads) {
-                t.join();
+            for (Map.Entry<Long, ServerThread> set: threads.entrySet()) {
+                //TODO Each Thread should sends a dc packet to each client
+                set.getValue().join();
             }
-        } catch (InterruptedException | IOException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static WeTellServer getInstance() {
+        return server;
+    }
+
+    protected void requestStopThread(long serverThreadID) {
+        closeThreadQueue.add(threads.get(serverThreadID));
+        latch.countDown();
     }
 }
