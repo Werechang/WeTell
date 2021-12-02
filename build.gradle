@@ -28,16 +28,6 @@ tasks.withType(JavaCompile) {
 
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
-task getOs() {
-    if (currentOs.windows)
-        return 'win'
-    else if (currentOs.linux)
-        return 'lin'
-    else if (currentOs.macOsX)
-        return 'mac'
-    return ''
-}
-
 application {
     mainModule = 'com.gebb.wetell'
     mainClass = 'com.gebb.wetell.client.WeTellClient'
