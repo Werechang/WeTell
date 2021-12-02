@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 public class Datapacket implements Serializable {
     @Serial
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     private final ArrayList<byte[]> encryptedData = new ArrayList<>(2);
     private static Cipher cipher;
@@ -80,14 +80,8 @@ public class Datapacket implements Serializable {
         if (privateKey == null || privateKey.isDestroyed()) {
             // Tedious conversion from ArrayList of Object[] to one byte[]
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                ObjectOutputStream oos = new ObjectOutputStream(bos);
-                for (Object o : encryptedData) {
-                    oos.writeObject(o);
-                }
-                oos.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
+            for (int i = 1; i < encryptedData.size(); i++) {
+                bos.writeBytes(encryptedData.get(i));
             }
             // get first position of first byte array, always the packetType id. Because there
             return new PacketData(PacketType.getTypeById(encryptedData.get(0)[0]), bos.toByteArray());
