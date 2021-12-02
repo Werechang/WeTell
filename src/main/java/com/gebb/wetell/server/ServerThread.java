@@ -1,10 +1,6 @@
 package com.gebb.wetell.server;
 
-import com.gebb.wetell.IConnectable;
-import com.gebb.wetell.Datapacket;
-import com.gebb.wetell.KeyPairManager;
-import com.gebb.wetell.PacketData;
-import com.gebb.wetell.client.WeTellClient;
+import com.gebb.wetell.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.BadPaddingException;
@@ -14,6 +10,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 
 public class ServerThread extends Thread implements IConnectable {
@@ -44,6 +41,12 @@ public class ServerThread extends Thread implements IConnectable {
         startListenThread();
         // TODO send key, request key
         try {
+            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
+        } catch (NoSuchAlgorithmException e) {
+            // TODO end
+            e.printStackTrace();
+        }
+        try {
             listenThread.join();
             oos.flush();
             oos.close();
@@ -52,6 +55,7 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+        WeTellServer.getInstance().requestStopThread(this.getId());
     }
 
     private void startListenThread() {
@@ -87,7 +91,7 @@ public class ServerThread extends Thread implements IConnectable {
         }
         // TODO Implement actions
         switch (data.getType()) {
-            case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
+            case SUCCESS -> System.out.println("Success");
         }
     }
 

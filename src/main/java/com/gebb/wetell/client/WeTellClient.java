@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 
 public class WeTellClient extends Application implements IConnectable, IGUICallable {
@@ -49,7 +50,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private void connect() {
         try {
             Socket socket = new Socket();
-            socket.connect(new InetSocketAddress("localhost", 21345));
+            socket.connect(new InetSocketAddress("localhost", 80));
             oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             oos.flush();
             ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -62,7 +63,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 new Thread(() -> {
                     while (isWaitingForConnection && !isCloseRequest) {
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(10000);
                             connect();
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
@@ -75,7 +76,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     private void listen() {
-        new Thread(() -> {
+        listenThread = new Thread(() -> {
             while (!isWaitingForConnection && !isCloseRequest) {
                 try {
                     Datapacket packet = (Datapacket) ois.readObject();
@@ -93,22 +94,19 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     e.printStackTrace();
                 }
             }
-        }).start();
-    }
-
-    public void prepareClose() {
-        isCloseRequest = true;
-        if (listenThread != null) {
-            try {
-                listenThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        });
+        listenThread.start();
     }
 
     @Override
     public void onLoginPress(String username, String password) {
+        if (username.isEmpty() || password.isEmpty()) {
+            return;
+        }
+        // TODO Min length for uname and password
+        if (username.length() < 8 || password.length() < 5) {
+
+        }
         //TODO Attention Logic
     }
 
@@ -119,7 +117,15 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             return;
         }
         switch (data.getType()) {
-
+            case KEY -> {
+                try {
+                    serverKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
+                } catch (InvalidKeySpecException e) {
+                    e.printStackTrace();
+                }
+                sendPacket(new PacketData(PacketType.SUCCESS));
+            }
+            case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
 
@@ -132,5 +138,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
         }
+    }
+
+    public void prepareClose() {
+        isCloseRequest = true;
+        // TODO Say the Server that client dc's
+        System.exit(0);
     }
 }
