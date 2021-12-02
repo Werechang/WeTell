@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
@@ -29,6 +30,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private Socket socket;
     private boolean isWaitingForConnection;
     private boolean isCloseRequest;
+    private SceneManager sceneManager;
 
     public static void main(String[] args) {
         launch(args);
@@ -44,7 +46,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         stage.setTitle("WeTell");
         stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
 
-        SceneManager sceneManager = new SceneManager(stage, this);
+        sceneManager = new SceneManager(stage, this);
     }
 
     private void connect() {
@@ -55,8 +57,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             oos.flush();
             ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
             isWaitingForConnection = false;
+            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
             listen();
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException e) {
             // if thread is not already running
             if (!isWaitingForConnection) {
                 isWaitingForConnection = true;
@@ -100,12 +103,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLoginPress(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
-            return;
-        }
         // TODO Min length for uname and password
-        if (username.length() < 8 || password.length() < 5) {
-
+        if (username.isEmpty() || password.isEmpty() || username.length() < 8 || password.length() < 5) {
+            return;
         }
         //TODO Attention Logic
     }
