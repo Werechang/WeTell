@@ -17,7 +17,7 @@ public class Tests {
 
     @Tag("data")
     @Test
-    public void testCryptography() throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public void testCryptography() throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidSignatureException {
         KeyPair kp = KeyPairManager.generateRSAKeyPair();
         Datapacket datapacket = new Datapacket(kp.getPublic(), PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(kp.getPublic()));
         PacketData pd = datapacket.getPacketData(kp.getPrivate());

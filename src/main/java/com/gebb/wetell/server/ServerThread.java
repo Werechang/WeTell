@@ -76,7 +76,7 @@ public class ServerThread extends Thread implements IConnectable {
                     if (e.getMessage().equals("Connection reset")) {
                         isClientConnected = false;
                     }
-                } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException e) {
+                } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException | InvalidSignatureException e) {
                     e.printStackTrace();
                 }
             }

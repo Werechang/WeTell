@@ -93,7 +93,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     if (e.getClass().getName().equals("java.io.EOFException") || e.getMessage().equals("Connection reset")) {
                         connect();
                     }
-                } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException e) {
+                } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException | InvalidSignatureException e) {
                     e.printStackTrace();
                 }
             }

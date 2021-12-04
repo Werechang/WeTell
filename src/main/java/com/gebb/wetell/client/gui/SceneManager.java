@@ -42,7 +42,6 @@ public class SceneManager {
         messagePane.setAlignment(Pos.CENTER);
         messagePane.setHgap(10);
         messagePane.setVgap(10);
-        messagePane.setPadding(new Insets(25,25,25,25));
         messagePane.setGridLinesVisible(true);
         messageScene = new MessageScene(messagePane, callable, this);
 
