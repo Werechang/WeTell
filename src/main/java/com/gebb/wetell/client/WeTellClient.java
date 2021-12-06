@@ -38,7 +38,6 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void start(Stage stage) {
-        // TODO Replace Thread.sleep with better interrupt
         // Init keys
         keyPair = KeyPairManager.generateRSAKeyPair();
         connect();
@@ -103,8 +102,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLoginPress(String username, String password) {
-        // TODO Min length for uname and password
-        if (username.isEmpty() || password.isEmpty() || username.length() < 8 || password.length() < 5) {
+        if (username.isEmpty() || password.isEmpty()) {
             return;
         }
     }

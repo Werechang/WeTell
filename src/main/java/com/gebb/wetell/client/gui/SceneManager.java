@@ -55,6 +55,7 @@ public class SceneManager {
             case LOGIN -> stage.setScene(loginScene);
             case SIGNIN -> stage.setScene(signInScene);
             case MESSAGE -> stage.setScene(messageScene);
+            default -> System.err.println("Scene not supported or set");
         }
     }
 }
