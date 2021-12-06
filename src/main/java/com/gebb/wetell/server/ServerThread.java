@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +14,8 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 
 public class ServerThread extends Thread implements IConnectable {
 
@@ -21,7 +25,10 @@ public class ServerThread extends Thread implements IConnectable {
     private final KeyPair keyPair;
     private boolean isClientConnected = true;
     private PublicKey clientKey;
+    private boolean clientHasKeyTransferred = false;
+    private boolean clientReceivedKey = false;
     private Thread listenThread;
+
 
     protected ServerThread(@NotNull Socket clientSocket) {
         this.clientSocket = clientSocket;
@@ -63,7 +70,7 @@ public class ServerThread extends Thread implements IConnectable {
                 try {
                     Datapacket packet = (Datapacket) ois.readObject();
                     if (packet != null) {
-                        execPacket(packet.getPacketData(null));
+                        execPacket(packet.getPacketData(clientReceivedKey ? keyPair.getPrivate() : null));
                     }
                     Thread.sleep(2000);
                 } catch (IOException | ClassNotFoundException e) {
@@ -90,6 +97,26 @@ public class ServerThread extends Thread implements IConnectable {
         }
         switch (data.getType()) {
             case SUCCESS -> System.out.println("Success");
+            case KEY -> {
+                try {
+                    clientKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
+                    clientHasKeyTransferred = true;
+                } catch (InvalidKeySpecException e) {
+                    e.printStackTrace();
+                }
+            }
+            case LOGIN -> {
+                if (!clientHasKeyTransferred) {
+                    sendPacket(new PacketData(PacketType.KEYREQUEST));
+                    return;
+                }
+                String[] unamepass = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
+                if (unamepass.length != 2) {
+                    return;
+                }
+                hashString(unamepass[1]);
+                }
+            case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
@@ -103,5 +130,17 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
         }
+    }
+
+    private byte[] hashString(String str) {
+        byte[] pepper = {32, -23, -45, -67, 92, -66, 100, -91, 80, -122, -51, 42, -21, 116, 17, -42};
+        KeySpec spec = new PBEKeySpec(str.toCharArray(), pepper, 65536, 128);
+        try {
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            return factory.generateSecret(spec).getEncoded();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        throw new UnknownError("An error occurred while hashing a string");
     }
 }

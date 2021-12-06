@@ -7,11 +7,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 
 public class Tests {
 
@@ -26,6 +24,15 @@ public class Tests {
             Datapacket p = new Datapacket(k, PacketType.LOGIN, "WeTellUsNiceThings".getBytes(StandardCharsets.UTF_8));
             assertEquals(new String(p.getPacketData(kp.getPrivate()).getData(), StandardCharsets.UTF_8), "WeTellUsNiceThings");
         }
+    }
+
+    @Tag("data")
+    @Test
+    public void testHashing() {
+        SecureRandom random = new SecureRandom();
+        byte[] a = new byte[16];
+        random.nextBytes(a);
+        System.out.println(Arrays.toString(a));
     }
 
     @Tag("gui")

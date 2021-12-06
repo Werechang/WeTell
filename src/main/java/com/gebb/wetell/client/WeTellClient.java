@@ -105,6 +105,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         if (username.isEmpty() || password.isEmpty()) {
             return;
         }
+        sendPacket(new PacketData(PacketType.LOGIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
     }
 
     @Override
@@ -122,6 +123,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 sendPacket(new PacketData(PacketType.SUCCESS));
             }
             case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
+            case KEYREQUEST -> sendPacket(new PacketData(PacketType.KEY, keyPair.getPublic().getEncoded()));
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
