@@ -82,14 +82,11 @@ public class WeTellServer extends ServerSocket {
                 System.out.println("Shutting down...");
                 break;
             } else if (Objects.equals(s, "t") || Objects.equals(s, "T")) {
-                try {
-                    sqlManager.createTables();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                sqlManager.createTables();
             }
         }
         try {
+            sqlManager.close();
             //Socket s = new Socket();
             //s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
             idleThread.join();

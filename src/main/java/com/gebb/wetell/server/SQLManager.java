@@ -6,60 +6,82 @@ public class SQLManager {
 
     private Connection conn = null;
 
-    public SQLManager(String path) {
+    protected SQLManager(String path) {
         try {
             // create a connection to the database
             conn = DriverManager.getConnection(path);
             System.out.println("Connected to database successfully");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-        } finally {
+        }
+    }
+
+    protected void close() {
+        if (conn != null) {
             try {
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException ex) {
-                System.out.println(ex.getMessage());
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    protected void createTables() throws SQLException {
+    protected void createTables() {
         createUsersTable();
         createMessagesTable();
         createChatsTable();
         createContactsTable();
     }
 
-    protected void addUser(String username, String password) throws SQLException {
+    protected void addUser(String username, String password) {
         String sql = "INSERT INTO users(username,password) VALUES(?,?)";
-        PreparedStatement stmt = conn.prepareStatement(sql);
-        stmt.setString(1, username);
-        stmt.setString(2, password);
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
-    protected void createUsersTable() throws SQLException {
+    protected void createUsersTable() {
         String sql = "CREATE TABLE `users` (`id` int PRIMARY KEY, `name` string, `hashedPassword` string, `salt` string, `profile_pic` string);";
 
-        PreparedStatement stmt = conn.prepareStatement(sql);
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected void createMessagesTable() throws SQLException {
+    protected void createMessagesTable() {
         String sql = "CREATE TABLE `messages` ( `id` int PRIMARY KEY, `sender_id` int FOREIGN KEY, `chat_id` int FOREIGN KEY, `msg_content` string, `send_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);";
 
-        PreparedStatement stmt = conn.prepareStatement(sql);
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected void createChatsTable() throws SQLException {
+    protected void createChatsTable() {
         String sql = "CREATE TABLE `chats` (`id` int PRIMARY KEY, `profile_pic` string, `name` string);";
 
-        PreparedStatement stmt = conn.prepareStatement(sql);
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected void createContactsTable() throws SQLException {
+    protected void createContactsTable() {
         String sql = "CREATE TABLE `contacts` (`user_id` int FOREIGN KEY, `chat_id` int FOREIGN KEY);";
 
-        PreparedStatement stmt = conn.prepareStatement(sql);
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
