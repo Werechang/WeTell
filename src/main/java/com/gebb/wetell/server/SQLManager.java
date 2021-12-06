@@ -64,10 +64,4 @@ public class SQLManager {
 
         PreparedStatement stmt = conn.prepareStatement(sql);
     }
-
-
-    public static void main(String[] args) {
-        //createNewTable();
-    }
-
 }
