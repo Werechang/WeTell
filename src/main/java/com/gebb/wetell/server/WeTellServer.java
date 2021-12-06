@@ -12,6 +12,7 @@ public class WeTellServer extends ServerSocket {
     protected static boolean running = false;
     private final HashMap<Long, ServerThread> threads = new HashMap<>();
     private static WeTellServer server = null;
+    private final SQLManager sqlManager = new SQLManager("jdbc:sqlite:wetell.db");
 
     private final Queue<ServerThread> closeThreadQueue = new ConcurrentLinkedQueue<>();
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -94,12 +95,16 @@ public class WeTellServer extends ServerSocket {
         }
     }
 
+    protected void requestStopThread(long serverThreadID) {
+        closeThreadQueue.add(threads.get(serverThreadID));
+        latch.countDown();
+    }
+
     public static WeTellServer getInstance() {
         return server;
     }
 
-    protected void requestStopThread(long serverThreadID) {
-        closeThreadQueue.add(threads.get(serverThreadID));
-        latch.countDown();
+    protected SQLManager getSQLManager() {
+        return sqlManager;
     }
 }
