@@ -11,7 +11,8 @@ public enum PacketType {
     ERROR(4),
     SUCCESS(5),
     NOTIFICATION(6),
-    CLOSE_CONNECTION(7);
+    CLOSE_CONNECTION(7),
+    KEY_TRANSFER_SUCCESS(8);
 
     private final byte id;
 
