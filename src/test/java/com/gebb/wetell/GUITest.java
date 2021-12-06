@@ -33,6 +33,6 @@ public class GUITest extends Application implements IGUICallable {
 
     @Override
     public void onLoginPress(String username, String password) {
-        sceneManager.setScene(SceneType.MESSAGE);
+        sceneManager.setScene(SceneType.SIGNIN);
     }
 }
