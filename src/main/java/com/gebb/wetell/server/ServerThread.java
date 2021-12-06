@@ -39,11 +39,10 @@ public class ServerThread extends Thread implements IConnectable {
     @Override
     public void run() {
         startListenThread();
-        // TODO send key, request key
         try {
             sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
         } catch (NoSuchAlgorithmException e) {
-            // TODO end
+            sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
             e.printStackTrace();
         }
         try {
@@ -89,9 +88,9 @@ public class ServerThread extends Thread implements IConnectable {
         if (data == null) {
             return;
         }
-        // TODO Implement actions
         switch (data.getType()) {
             case SUCCESS -> System.out.println("Success");
+            default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
 

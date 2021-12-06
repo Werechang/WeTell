@@ -107,12 +107,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         if (username.isEmpty() || password.isEmpty() || username.length() < 8 || password.length() < 5) {
             return;
         }
-        //TODO Attention Logic
     }
 
     @Override
     public void execPacket(PacketData data) {
-        // TODO Implement actions
         if (data == null) {
             return;
         }
@@ -126,6 +124,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 sendPacket(new PacketData(PacketType.SUCCESS));
             }
             case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
+            default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
 
@@ -142,7 +141,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     public void prepareClose() {
         isCloseRequest = true;
-        // TODO Say the Server that client dc's
+        sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
         System.exit(0);
     }
 }
