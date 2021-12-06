@@ -3,6 +3,7 @@ package com.gebb.wetell.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -80,6 +81,12 @@ public class WeTellServer extends ServerSocket {
                 running = false;
                 System.out.println("Shutting down...");
                 break;
+            } else if (Objects.equals(s, "t") || Objects.equals(s, "T")) {
+                try {
+                    sqlManager.createTables();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
         try {

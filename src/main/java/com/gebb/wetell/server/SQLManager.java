@@ -24,7 +24,14 @@ public class SQLManager {
         }
     }
 
-    protected void createUser(String username, String password) throws SQLException {
+    protected void createTables() throws SQLException {
+        createUsersTable();
+        createMessagesTable();
+        createChatsTable();
+        createContactsTable();
+    }
+
+    protected void addUser(String username, String password) throws SQLException {
         String sql = "INSERT INTO users(username,password) VALUES(?,?)";
         PreparedStatement stmt = conn.prepareStatement(sql);
         stmt.setString(1, username);
