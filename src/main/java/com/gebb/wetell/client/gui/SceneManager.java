@@ -40,14 +40,14 @@ public class SceneManager {
         // MessageScene
         GridPane messagePane = new GridPane();
         messagePane.setAlignment(Pos.CENTER);
-        messagePane.setHgap(10);
-        messagePane.setVgap(10);
         messagePane.setGridLinesVisible(true);
         messageScene = new MessageScene(messagePane, callable, this);
 
         // Login is the first scene
         setScene(SceneType.LOGIN);
         stage.show();
+
+        //TODO Stage Center = Center! ?
     }
     
     public void setScene(SceneType type) {
