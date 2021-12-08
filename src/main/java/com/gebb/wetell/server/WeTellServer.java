@@ -1,5 +1,8 @@
 package com.gebb.wetell.server;
 
+import com.gebb.wetell.PacketData;
+import com.gebb.wetell.PacketType;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -80,14 +83,17 @@ public class WeTellServer extends ServerSocket {
                 running = false;
                 System.out.println("Shutting down...");
                 break;
+            } else if (Objects.equals(s, "t") || Objects.equals(s, "T")) {
+                sqlManager.createTables();
             }
         }
         try {
+            sqlManager.close();
             //Socket s = new Socket();
             //s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
             idleThread.join();
             for (Map.Entry<Long, ServerThread> set: threads.entrySet()) {
-                //TODO Each Thread should sends a dc packet to each client
+                set.getValue().sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
                 set.getValue().join();
             }
         } catch (InterruptedException e) {
@@ -95,12 +101,16 @@ public class WeTellServer extends ServerSocket {
         }
     }
 
+    protected void requestStopThread(long serverThreadID) {
+        closeThreadQueue.add(threads.get(serverThreadID));
+        latch.countDown();
+    }
+
     public static WeTellServer getInstance() {
         return server;
     }
 
-    protected void requestStopThread(long serverThreadID) {
-        closeThreadQueue.add(threads.get(serverThreadID));
-        latch.countDown();
+    protected SQLManager getSQLManager() {
+        return sqlManager;
     }
 }
