@@ -1,4 +1,5 @@
-Code review: [![CodeFactor](https://www.codefactor.io/repository/github/werechang/wetell/badge/master?s=02e43bbed5a88ed61cd56a049535426399911946)](https://www.codefactor.io/repository/github/werechang/wetell/overview/master)
+Code review rating:
+[![CodeFactor](https://www.codefactor.io/repository/github/werechang/wetell/badge/master?s=02e43bbed5a88ed61cd56a049535426399911946)](https://www.codefactor.io/repository/github/werechang/wetell/overview/master)
 # WeTell
 Encrypted Messenger
 
