@@ -1,10 +1,7 @@
 package com.gebb.wetell.client.gui;
 
 import com.gebb.wetell.client.IGUICallable;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -23,26 +20,8 @@ public class SceneManager {
         stage.setMinHeight(300);
         stage.setMinWidth(400);
 
-        // LoginPane
-        GridPane loginPane = new GridPane();
-        loginPane.setAlignment(Pos.CENTER);
-        loginPane.setHgap(10);
-        loginPane.setVgap(10);
-        loginPane.setPadding(new Insets(25,25,25,25));
         this.loginPane = new LoginPane(callable, this);
-
-        // SignInPane
-        GridPane signInPane = new GridPane();
-        signInPane.setAlignment(Pos.CENTER);
-        signInPane.setHgap(10);
-        signInPane.setVgap(10);
-        signInPane.setPadding(new Insets(25,25,25,25));
         this.signInPane = new SignInPane(callable, this);
-
-        // MessagePane
-        GridPane messagePane = new GridPane();
-        messagePane.setAlignment(Pos.CENTER);
-        messagePane.setGridLinesVisible(true);
         this.messagePane = new MessagePane(callable, this);
 
         // Login is the first scene
