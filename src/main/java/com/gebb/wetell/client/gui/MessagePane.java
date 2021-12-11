@@ -14,6 +14,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 
+import java.util.Objects;
+
 public class MessagePane extends GridPane {
 
 
@@ -26,7 +28,7 @@ public class MessagePane extends GridPane {
         HBox PbLogout = new HBox();
         PbLogout.setAlignment(Pos.CENTER);
         Circle userpbView = new Circle(250,250,30);
-        Image userpb = new Image("https://karrierebibel.de/wp-content/uploads/2017/02/Profilbild-Tipp-Bildausschnitt.jpg");
+        Image userpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         userpbView.setFill(new ImagePattern(userpb));
         Region region1 = new Region();
         HBox.setHgrow(region1, Priority.ALWAYS);
@@ -38,7 +40,7 @@ public class MessagePane extends GridPane {
         HBox contactpbname = new HBox();
         contactpbname.setAlignment(Pos.CENTER);
         Circle contactpbView = new Circle(250,250,30);
-        Image contactpb = new Image("https://karrierebibel.de/wp-content/uploads/2017/02/Profilbild-Tipp-Bildausschnitt.jpg");
+        Image contactpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         contactpbView.setFill(new ImagePattern(contactpb));
         Region region2 = new Region();
         HBox.setHgrow(region2, Priority.ALWAYS);
