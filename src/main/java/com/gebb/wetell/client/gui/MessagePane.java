@@ -14,12 +14,14 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 
-public class MessageScene extends Scene {
+public class MessagePane extends GridPane {
 
 
-    public MessageScene(GridPane root, IGUICallable callable, SceneManager manager) {
-        super(root);
-        //this.getStylesheets().add(Objects.requireNonNull(MessageScene.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+    public MessagePane(IGUICallable callable, SceneManager manager) {
+        super();
+        this.setAlignment(Pos.CENTER);
+        this.setGridLinesVisible(true);
+        //this.getStylesheets().add(Objects.requireNonNull(MessagePane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         HBox PbLogout = new HBox();
         PbLogout.setAlignment(Pos.CENTER);
@@ -31,7 +33,7 @@ public class MessageScene extends Scene {
         Button Logout = new Button("Logout");
         Logout.setAlignment(Pos.CENTER_RIGHT);
         PbLogout.getChildren().addAll(userpbView, region1, Logout);
-        root.add(PbLogout, 0, 0);
+        this.add(PbLogout, 0, 0);
 
         HBox contactpbname = new HBox();
         contactpbname.setAlignment(Pos.CENTER);
@@ -43,7 +45,7 @@ public class MessageScene extends Scene {
         Label Contactname = new Label("Name");
         Contactname.setAlignment(Pos.CENTER_RIGHT);
         contactpbname.getChildren().addAll(contactpbView, region2, Contactname);
-        root.add(contactpbname, 1, 0);
+        this.add(contactpbname, 1, 0);
 
         HBox sendmessage = new HBox();
         TextField message = new TextField();
@@ -51,7 +53,7 @@ public class MessageScene extends Scene {
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_RIGHT);
         sendmessage.getChildren().addAll(message, send);
-        root.add(sendmessage, 1, 3);
+        this.add(sendmessage, 1, 3);
 
     }
 }
