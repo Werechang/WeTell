@@ -6,7 +6,7 @@ public class SQLManager {
 
     private Connection conn = null;
 
-    protected SQLManager(String path) { //TODO path?
+    protected SQLManager(String path) {
         try {
             // create a connection to the database
             conn = DriverManager.getConnection(path);
@@ -118,7 +118,7 @@ public class SQLManager {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, username);
             ResultSet result = pstmt.executeQuery();
-            if(result.next()) {
+            if (result.next()) {
                 return new UserData(result.getString("salt"), result.getString("hashedPassword"));
             }
         } catch (SQLException e) {
@@ -127,7 +127,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected void getMessagesForChat(){
+    protected void getMessagesForChat() {
 
     }
 
