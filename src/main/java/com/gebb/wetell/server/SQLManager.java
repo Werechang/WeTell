@@ -120,14 +120,12 @@ public class SQLManager {
             pstmt.setString(2, hashedPassword);
             ResultSet result = pstmt.executeQuery();
             if(result.next()) {
-                return new UserData(result); //TODO
-                System.out.println("Successfully logged in.");
-            } else {
-                throw new NullPointerException();
+                return null; //TODO
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        throw new NullPointerException();
     }
 
     protected void getMessagesForChat(){

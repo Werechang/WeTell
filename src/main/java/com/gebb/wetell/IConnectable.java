@@ -12,4 +12,10 @@ public interface IConnectable {
      * @param data The data + type that is used
      */
     void sendPacket(PacketData data);
+
+    /**
+     * Send a packet through the OutputStream
+     * @param data The data + type that is used
+     */
+    void sendPacket(PacketData data, boolean isEncrypted);
 }

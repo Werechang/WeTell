@@ -24,7 +24,7 @@ public class ServerThread extends Thread implements IConnectable {
     private ObjectInputStream ois;
     private final KeyPair keyPair;
     private boolean isClientConnected = true;
-    private PublicKey clientKey;
+    private PublicKey clientKey = null;
     private boolean clientHasKeyTransferred = false;
     private boolean clientReceivedKey = false;
     private Thread listenThread;
@@ -38,6 +38,7 @@ public class ServerThread extends Thread implements IConnectable {
             oos = new ObjectOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
             oos.flush();
             ois = new ObjectInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+            ois.setObjectInputFilter(new DatapacketFilter());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,7 +48,7 @@ public class ServerThread extends Thread implements IConnectable {
     public void run() {
         startListenThread();
         try {
-            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
+            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
         } catch (NoSuchAlgorithmException e) {
             sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
             e.printStackTrace();
@@ -104,17 +105,18 @@ public class ServerThread extends Thread implements IConnectable {
                 } catch (InvalidKeySpecException e) {
                     e.printStackTrace();
                 }
+                sendPacket(new PacketData(PacketType.KEY_TRANSFER_SUCCESS));
             }
             case LOGIN -> {
                 if (!clientHasKeyTransferred) {
-                    sendPacket(new PacketData(PacketType.KEYREQUEST));
+                    sendPacket(new PacketData(PacketType.KEYREQUEST), false);
                     return;
                 }
-                String[] unamepass = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
-                if (unamepass.length != 2) {
+                String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
+                if (usernamePassword.length != 2) {
                     return;
                 }
-                hashString(unamepass[1]);
+                hashString(usernamePassword[1]);
                 }
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
@@ -123,8 +125,13 @@ public class ServerThread extends Thread implements IConnectable {
 
     @Override
     public void sendPacket(PacketData data) {
+        sendPacket(data, clientReceivedKey);
+    }
+
+    @Override
+    public void sendPacket(PacketData data, boolean isEncrypted) {
         try {
-            oos.writeObject(new Datapacket(clientKey, data.getType(), data.getData()));
+            oos.writeObject(new Datapacket(clientKey, data.getType(), isEncrypted, data.getData()));
             oos.flush();
             oos.reset();
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {

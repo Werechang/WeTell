@@ -19,13 +19,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Datapacket implements Serializable {
-
     @Serial
-    private static final long serialVersionUID = 2483044901065632375L;
+    private static final long serialVersionUID = -6234660021077765177L;
 
     private final ArrayList<byte[]> encryptedData = new ArrayList<>(4);
-    private static Cipher cipher;
+    private final boolean isEncrypted;
 
+    private static Cipher cipher;
     private static final int SIGNATURE_KEY_POS = 0;
     private static final int SIGNATURE_HASH_POS = 1;
     private static final int PACKET_TYPE_POS = 2;
@@ -52,9 +52,14 @@ public class Datapacket implements Serializable {
      *             write serialization/deserialization helper methods in your Objects class.
      * @throws InvalidKeyException This should not happen. Make sure that you generated a PublicKey with the KeyPairManager.
      */
-    public Datapacket(@Nullable PublicKey publicKey, @NotNull PacketType type, byte... data) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    public Datapacket(@Nullable PublicKey publicKey, @NotNull PacketType type, byte... data) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+        this(publicKey, type, true, data);
+    }
+
+    public Datapacket(@Nullable PublicKey publicKey, @NotNull PacketType type, boolean isEncrypted, byte... data) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        if (publicKey == null) {
+        if (publicKey == null || !isEncrypted) {
+            this.isEncrypted = false;
             // Don't encrypt
             // Combine type and data
             bos.writeBytes(new byte[]{type.getId()});
@@ -68,6 +73,7 @@ public class Datapacket implements Serializable {
                 encryptedData.add(data);
             }
         } else {
+            this.isEncrypted = true;
             // Store encrypted data in a bos
             // reserve pos 0 and 1 for the signature
             encryptedData.add(new byte[]{0});
@@ -108,11 +114,16 @@ public class Datapacket implements Serializable {
      *                             PublicKey passed into the constructor of this object.
      */
     public @NotNull PacketData getPacketData(@Nullable PrivateKey privateKey) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidSignatureException {
-        if (privateKey == null || privateKey.isDestroyed()) {
+        if (!isEncrypted || privateKey == null || privateKey.isDestroyed()) {
+            if (isEncrypted) {
+                throw new NullPointerException("Packet is encrypted while the key is null");
+            }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ByteArrayOutputStream dataBos = new ByteArrayOutputStream();
             bos.writeBytes(encryptedData.get(PACKET_TYPE_POS));
             for (int i = DATA_POS; i < encryptedData.size(); i++) {
                 bos.writeBytes(encryptedData.get(i));
+                dataBos.writeBytes(encryptedData.get(i));
             }
             // get first position of first byte array, always the packetType id. Because there
             boolean isSignatureValid = false;
@@ -124,20 +135,20 @@ public class Datapacket implements Serializable {
             if (!isSignatureValid) {
                 throw new InvalidSignatureException();
             }
-            return new PacketData(PacketType.getTypeById(encryptedData.get(PACKET_TYPE_POS)[0]), bos.toByteArray());
+            return new PacketData(PacketType.getTypeById(encryptedData.get(PACKET_TYPE_POS)[0]), dataBos.toByteArray());
         } else {
             cipher.init(Cipher.PRIVATE_KEY, privateKey);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ByteArrayOutputStream encrBos = new ByteArrayOutputStream();
-            encrBos.writeBytes(encryptedData.get(PACKET_TYPE_POS));
+            ByteArrayOutputStream signatureBos = new ByteArrayOutputStream();
+            signatureBos.writeBytes(encryptedData.get(PACKET_TYPE_POS));
             // Starting at 3 because of PacketType being at 2 and signature in range 0-1
             for (int i = DATA_POS; i < encryptedData.size(); i++) {
                 bos.writeBytes(cipher.doFinal(encryptedData.get(i)));
-                encrBos.writeBytes(encryptedData.get(i));
+                signatureBos.writeBytes(encryptedData.get(i));
             }
             boolean isSignatureValid = false;
             try {
-                isSignatureValid = KeyPairManager.checkSignature(KeyPairManager.byteStreamToDSAPublicKey(encryptedData.get(SIGNATURE_KEY_POS)), encrBos.toByteArray(), encryptedData.get(SIGNATURE_HASH_POS));
+                isSignatureValid = KeyPairManager.checkSignature(KeyPairManager.byteStreamToDSAPublicKey(encryptedData.get(SIGNATURE_KEY_POS)), signatureBos.toByteArray(), encryptedData.get(SIGNATURE_HASH_POS));
             } catch (InvalidKeySpecException e) {
                 e.printStackTrace();
             }

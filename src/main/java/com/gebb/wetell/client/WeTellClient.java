@@ -25,11 +25,12 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private KeyPair keyPair;
-    private PublicKey serverKey;
+    private PublicKey serverKey = null;
     private Thread listenThread;
     private Socket socket;
     private boolean isWaitingForConnection;
     private boolean isCloseRequest;
+    private boolean serverReceivedKey = false;
     private SceneManager sceneManager;
 
     public static void main(String[] args) {
@@ -55,8 +56,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             oos.flush();
             ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+            ois.setObjectInputFilter(new DatapacketFilter());
             isWaitingForConnection = false;
-            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
+            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
             listen();
         } catch (IOException | NoSuchAlgorithmException e) {
             // if thread is not already running
@@ -83,7 +85,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 try {
                     Datapacket packet = (Datapacket) ois.readObject();
                     if (packet != null) {
-                        execPacket(packet.getPacketData(null));
+                        execPacket(packet.getPacketData(serverReceivedKey ? keyPair.getPrivate() : null));
                     }
                     Thread.sleep(2000);
                 } catch (IOException | ClassNotFoundException e) {
@@ -120,18 +122,30 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 } catch (InvalidKeySpecException e) {
                     e.printStackTrace();
                 }
-                sendPacket(new PacketData(PacketType.SUCCESS));
+                sendPacket(new PacketData(PacketType.KEY_TRANSFER_SUCCESS));
             }
             case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
-            case KEYREQUEST -> sendPacket(new PacketData(PacketType.KEY, keyPair.getPublic().getEncoded()));
+            case KEYREQUEST -> {
+                try {
+                    sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                }
+            }
+            case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
 
     @Override
     public void sendPacket(@NotNull PacketData data) {
+        sendPacket(data, serverReceivedKey);
+    }
+
+    @Override
+    public void sendPacket(PacketData data, boolean isEncrypted) {
         try {
-            oos.writeObject(new Datapacket(serverKey, data.getType(), data.getData()));
+            oos.writeObject(new Datapacket(serverKey, data.getType(), isEncrypted, data.getData()));
             oos.flush();
             oos.reset();
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
