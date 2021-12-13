@@ -10,10 +10,7 @@ import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
@@ -28,6 +25,7 @@ public class ServerThread extends Thread implements IConnectable {
     private boolean clientHasKeyTransferred = false;
     private boolean clientReceivedKey = false;
     private Thread listenThread;
+    private String username = null;
 
 
     protected ServerThread(@NotNull Socket clientSocket) {
@@ -97,7 +95,6 @@ public class ServerThread extends Thread implements IConnectable {
             return;
         }
         switch (data.getType()) {
-            case SUCCESS -> System.out.println("Success");
             case KEY -> {
                 try {
                     clientKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
@@ -116,8 +113,30 @@ public class ServerThread extends Thread implements IConnectable {
                 if (usernamePassword.length != 2) {
                     return;
                 }
-                hashString(usernamePassword[1]);
+                try {
+                    SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUser(usernamePassword[0]);
+                    // If hashes do not match
+                    if (!ud.getHashedPassword().equals(hashString(usernamePassword[1]+ud.getSalt()))) {
+                        throw new NullPointerException();
+                    }
+                    username = usernamePassword[0];
+                } catch (NullPointerException e) {
+                    sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong".getBytes(StandardCharsets.UTF_8)));
                 }
+                }
+            case SIGNIN -> {
+                if (!clientHasKeyTransferred) {
+                    sendPacket(new PacketData(PacketType.KEYREQUEST), false);
+                    return;
+                }
+                String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
+                if (usernamePassword.length != 2) {
+                    return;
+                }
+                String salt = generateSalt();
+                WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
+                username = usernamePassword[0];
+            }
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
@@ -139,15 +158,22 @@ public class ServerThread extends Thread implements IConnectable {
         }
     }
 
-    private byte[] hashString(String str) {
+    private String hashString(String str) {
         byte[] pepper = {32, -23, -45, -67, 92, -66, 100, -91, 80, -122, -51, 42, -21, 116, 17, -42};
         KeySpec spec = new PBEKeySpec(str.toCharArray(), pepper, 65536, 128);
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-            return factory.generateSecret(spec).getEncoded();
+            return new String(factory.generateSecret(spec).getEncoded(), StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
         }
         throw new UnknownError("An error occurred while hashing a string");
+    }
+
+    private String generateSalt() {
+        SecureRandom random = new SecureRandom();
+        byte[] a = new byte[16];
+        random.nextBytes(a);
+        return new String(a, StandardCharsets.UTF_8);
     }
 }

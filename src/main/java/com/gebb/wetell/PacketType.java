@@ -9,10 +9,11 @@ public enum PacketType {
     LOGIN(2),
     MSG(3),
     ERROR(4),
-    SUCCESS(5),
+    LOGIN_SUCCESS(5),
     NOTIFICATION(6),
     CLOSE_CONNECTION(7),
-    KEY_TRANSFER_SUCCESS(8);
+    KEY_TRANSFER_SUCCESS(8),
+    SIGNIN(9);
 
     private final byte id;
 

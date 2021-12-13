@@ -2,6 +2,7 @@ package com.gebb.wetell.client;
 
 import com.gebb.wetell.*;
 import com.gebb.wetell.client.gui.SceneManager;
+import com.gebb.wetell.client.gui.SceneType;
 import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -104,7 +105,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLoginPress(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             return;
         }
         sendPacket(new PacketData(PacketType.LOGIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
@@ -116,6 +117,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             return;
         }
         switch (data.getType()) {
+            case LOGIN_SUCCESS -> sceneManager.setScene(SceneType.MESSAGE);
             case KEY -> {
                 try {
                     serverKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
@@ -155,7 +157,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     public void prepareClose() {
         isCloseRequest = true;
-        sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
+        if (oos != null) {
+            sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
+        }
         System.exit(0);
     }
 }

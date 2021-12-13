@@ -83,7 +83,7 @@ public class SQLManager {
             PreparedStatement pstmtq = conn.prepareStatement(sqlq);
             pstmtq.setString(1, username);
             ResultSet result = pstmtq.executeQuery();
-            if(result.next()) {
+            if (result.next()) {
                 System.out.println("User already exists.");
             } else {
                 PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -112,15 +112,14 @@ public class SQLManager {
         }
     }
 
-    protected UserData getUser(String username, String hashedPassword) {
-        String sql = "SELECT salt, hashedPassword FROM users WHERE username = ? AND hashedPassword = ?)";
+    protected UserData getUser(String username) {
+        String sql = "SELECT salt, hashedPassword FROM users WHERE username = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, username);
-            pstmt.setString(2, hashedPassword);
             ResultSet result = pstmt.executeQuery();
             if(result.next()) {
-                return null; //TODO
+                return new UserData(result.getString("salt"), result.getString("hashedPassword"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

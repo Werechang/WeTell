@@ -51,7 +51,7 @@ public class LoginPane extends GridPane {
 
         Button loginButton = new Button("Login");
         loginButton.setPrefSize(60, 10);
-        loginButton.setOnAction(event -> callable.onLoginPress(null, null));
+        loginButton.setOnAction(event -> callable.onLoginPress(userTextField.getText(), passwordField.getText()));
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(loginButton);
