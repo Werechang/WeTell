@@ -77,14 +77,22 @@ public class SQLManager {
     }
 
     protected void addUser(String username, String hashedPassword, String salt) {
+        String sqlq = "SELECT username FROM users WHERE username = ?)";
         String sql = "INSERT INTO users(username,hashedPassword,salt) VALUES(?,?,?)";
         try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);   //TODO Create only if not already available. (Only Username; Password )
-            pstmt.setString(1, username);
-            pstmt.setString(2, hashedPassword);
-            pstmt.setString(3, salt);
-            pstmt.executeUpdate();
-            System.out.println("User successfully added.");
+            PreparedStatement pstmtq = conn.prepareStatement(sqlq);
+            pstmtq.setString(1, username);
+            ResultSet result = pstmtq.executeQuery();
+            if(result.next()){
+                System.out.println("User already exists.");
+            } else {
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                pstmt.setString(1, username);
+                pstmt.setString(2, hashedPassword);
+                pstmt.setString(3, salt);
+                pstmt.executeUpdate();
+                System.out.println("User successfully added.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -104,12 +112,19 @@ public class SQLManager {
         }
     }
 
-    protected void getUser(){
-        String sql = "SELECT ";
+    protected UserData getUser(String username, String hashedPassword){
+        String sql = "SELECT salt, hashedPassword FROM users WHERE username = ? AND hashedPassword = ?)";
         try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);   //TODO Check whether there are users and whether the data entered is correct.
-            pstmt.executeQuery();
-            throw new NullPointerException();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, username);
+            pstmt.setString(2, hashedPassword);
+            ResultSet result = pstmt.executeQuery();
+            if(result.next()) {
+                return new UserData(result); //TODO
+                System.out.println("Successfully logged in.");
+            } else {
+                throw new NullPointerException();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -119,7 +134,20 @@ public class SQLManager {
 
     }
 
-    public static class User {
+    public static class UserData {
+        private String salt;
+        private String hashedPassword;
 
+        public UserData(String salt, String hashedPassword) {
+            this.salt = salt;
+            this.hashedPassword = hashedPassword;
+        }
+
+        public String getSalt() {
+            return salt;
+        }
+        public String getHashedPassword() {
+            return hashedPassword;
+        }
     }
 }
