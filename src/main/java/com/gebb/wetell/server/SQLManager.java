@@ -83,7 +83,7 @@ public class SQLManager {
             PreparedStatement pstmtq = conn.prepareStatement(sqlq);
             pstmtq.setString(1, username);
             ResultSet result = pstmtq.executeQuery();
-            if(result.next()){
+            if(result.next()) {
                 System.out.println("User already exists.");
             } else {
                 PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -98,7 +98,7 @@ public class SQLManager {
         }
     }
 
-    protected void newMessage(int sender_id, int chat_id, String msg_content){
+    protected void newMessage(int sender_id, int chat_id, String msg_content) {
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content) VALUES(?,?,?)";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -112,7 +112,7 @@ public class SQLManager {
         }
     }
 
-    protected UserData getUser(String username, String hashedPassword){
+    protected UserData getUser(String username, String hashedPassword) {
         String sql = "SELECT salt, hashedPassword FROM users WHERE username = ? AND hashedPassword = ?)";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
