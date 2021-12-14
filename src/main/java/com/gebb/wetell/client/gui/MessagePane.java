@@ -1,10 +1,12 @@
 package com.gebb.wetell.client.gui;
 
 import com.gebb.wetell.client.IGUICallable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -27,27 +29,38 @@ public class MessagePane extends GridPane {
 
         HBox PbLogout = new HBox();
         PbLogout.setAlignment(Pos.CENTER);
-        Circle userpbView = new Circle(250,250,30);
+        Circle userpbView = new Circle(250,250,30); //TODO Spacing
         Image userpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         userpbView.setFill(new ImagePattern(userpb));
         Region region1 = new Region();
         HBox.setHgrow(region1, Priority.ALWAYS);
-        Button Logout = new Button("Logout");
+        Button Logout = new Button("Logout"); //TODO Spacing
         Logout.setAlignment(Pos.CENTER_RIGHT);
+        Logout.setOnAction(event -> manager.setScene(SceneType.LOGIN));
         PbLogout.getChildren().addAll(userpbView, region1, Logout);
         this.add(PbLogout, 0, 0);
 
+        //reusable Contact-Layout
+
         HBox contactpbname = new HBox();
         contactpbname.setAlignment(Pos.CENTER);
-        Circle contactpbView = new Circle(250,250,30);
+        Circle contactpbView = new Circle(250,250,30); //TODO Spacing
         Image contactpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         contactpbView.setFill(new ImagePattern(contactpb));
+        //contactpbView.setId("contactpbView");
         Region region2 = new Region();
         HBox.setHgrow(region2, Priority.ALWAYS);
-        Label Contactname = new Label("Name");
+        Label Contactname = new Label("Name"); //TODO Spacing
         Contactname.setAlignment(Pos.CENTER_RIGHT);
+        //Contactname.setId("contactname");
         contactpbname.getChildren().addAll(contactpbView, region2, Contactname);
         this.add(contactpbname, 1, 0);
+
+        ListView contactslist = new ListView();
+
+        contactslist.getItems().add("Item 2");
+        contactslist.getItems().add("Item 3");
+        this.add(contactslist, 0, 1);
 
         HBox sendmessage = new HBox();
         TextField message = new TextField();
@@ -55,7 +68,7 @@ public class MessagePane extends GridPane {
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_RIGHT);
         sendmessage.getChildren().addAll(message, send);
-        this.add(sendmessage, 1, 3);
+        this.add(sendmessage, 1, 2);
 
     }
 }
