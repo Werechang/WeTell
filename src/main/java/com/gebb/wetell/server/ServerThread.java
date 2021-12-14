@@ -133,6 +133,10 @@ public class ServerThread extends Thread implements IConnectable {
                 if (usernamePassword.length != 2) {
                     return;
                 }
+                if (usernamePassword[0].length() < 4 || usernamePassword[1].length() < 4) {
+                    sendPacket(new PacketData(PacketType.ERROR, "Username or password length must be at least 4.".getBytes(StandardCharsets.UTF_8)));
+                    return;
+                }
                 String salt = generateSalt();
                 try {
                     WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
@@ -140,6 +144,7 @@ public class ServerThread extends Thread implements IConnectable {
                     sendPacket(new PacketData(PacketType.ERROR, "Username already exists.".getBytes(StandardCharsets.UTF_8)));
                 }
                 username = usernamePassword[0];
+                sendPacket(new PacketData(PacketType.LOGIN_SUCCESS));
             }
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             case MSG -> {

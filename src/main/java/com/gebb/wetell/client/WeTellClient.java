@@ -33,7 +33,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private boolean isCloseRequest;
     private boolean serverReceivedKey = false;
     private SceneManager sceneManager;
-    private boolean hasResources = false;
+    private boolean hasResources = true;
 
     public static void main(String[] args) {
         launch(args);
@@ -116,7 +116,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onSignInPress(String username, String password) {
-        if (username == null || username.isEmpty() || password == null || password.isEmpty() || username.length() < 4 || password.length() < 8) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty() || username.length() < 4 || password.length() < 4) {
             //TODO Show to user
             System.exit(-784215347);
         }

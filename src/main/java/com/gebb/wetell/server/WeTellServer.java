@@ -85,6 +85,8 @@ public class WeTellServer extends ServerSocket {
                 break;
             } else if (Objects.equals(s, "t") || Objects.equals(s, "T")) {
                 sqlManager.createTables();
+            } else if (Objects.equals(s, "r") || Objects.equals(s, "R")) {
+                System.out.println("Number of ServerThreads active: " + threads.size());
             }
         }
         try {

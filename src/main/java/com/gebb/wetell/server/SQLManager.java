@@ -1,6 +1,8 @@
 package com.gebb.wetell.server;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SQLManager {
 
@@ -68,7 +70,7 @@ public class SQLManager {
                     "sender_id INTEGER, " +
                     "chat_id INTEGER , " +
                     "msg_content TEXT NOT NULL, " +
-                    "send_at TEXT DEFAULT '2021-12-1 12:00:00.000', " +
+                    "sent_at TEXT DEFAULT '2021-12-1 12:00:00.000', " +
                     "FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE NO ACTION, " +
                     "FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE NO ACTION)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -105,8 +107,8 @@ public class SQLManager {
     }
 
     protected void addUser(String username, String hashedPassword, String salt) {
-        String sqlq = "SELECT username FROM users WHERE username = ?)";
-        String sql = "INSERT INTO users(username,hashedPassword,salt) VALUES(?,?,?)";
+        String sqlq = "SELECT name FROM users WHERE name = ?";
+        String sql = "INSERT INTO users(name,hashedPassword,salt) VALUES(?,?,?)";
         try {
             PreparedStatement pstmtq = conn.prepareStatement(sqlq);
             pstmtq.setString(1, username);
@@ -127,7 +129,7 @@ public class SQLManager {
     }
 
     protected void newMessage(int sender_id, int chat_id, String msg_content) {
-        String sql = "INSERT INTO messages(sender_id,chat_id,msg_content) VALUES(?,?,?)";
+        String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, sender_id);
@@ -141,7 +143,7 @@ public class SQLManager {
     }
 
     protected UserData getUser(String username) {
-        String sql = "SELECT salt, hashedPassword FROM users WHERE username = ?";
+        String sql = "SELECT salt, hashedPassword FROM users WHERE name = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, username);
@@ -155,8 +157,23 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected void getMessagesForChat() {
-
+    protected ArrayList<MessageData> getMessagesForChat(int chat_id) {
+        String sql = "SELECT sender_id, msg_content, sent_at FROM messages WHERE chat_id = ? ORDER BY id DESC LIMIT 20";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, chat_id);
+            ResultSet result = pstmt.executeQuery();
+            ArrayList<MessageData> temp = new ArrayList<>(20);
+            while (result.next()) {
+                temp.add(new MessageData(result.getInt("sender_id"), result.getString("msg_content"), result.getString("sent_at")));
+            }
+            if (temp.size() != 0) {
+                return temp;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
     }
 
     public static class UserData {
@@ -173,6 +190,30 @@ public class SQLManager {
         }
         public String getHashedPassword() {
             return hashedPassword;
+        }
+    }
+
+    public static class MessageData {
+        private final int sender_id;
+        private final String msg_content;
+        private final String sent_at;
+
+        public MessageData(int sender_id, String msg_content, String sent_at) {
+            this.sender_id = sender_id;
+            this.msg_content = msg_content;
+            this.sent_at = sent_at;
+        }
+
+        public int getSender_id() {
+            return sender_id;
+        }
+
+        public String getMsg_content() {
+            return msg_content;
+        }
+
+        public String getSent_at() {
+            return sent_at;
         }
     }
 }
