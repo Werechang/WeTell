@@ -57,17 +57,32 @@ public class MessagePane extends GridPane {
         this.add(contactpbname, 1, 0);
 
         ListView contactslist = new ListView();
+        //use here the contact-layout too
+        contactslist.getItems().add("Item 2");
+        contactslist.getItems().add("Item 3");
+        this.add(contactslist, 0, 1, 1, 2);
+
+        ListView messageslist = new ListView();
+
+        //resuable MessageBox - braucht man die überhaupt? vlt. einfach indexbasiertes Label alignment?
+        HBox messageBox = new HBox();
+        Label message = new Label("Message");
+        message.setAlignment(Pos.CENTER_RIGHT); //Change Alignment
+        messageBox.getChildren().addAll(message);
+
 
         contactslist.getItems().add("Item 2");
         contactslist.getItems().add("Item 3");
-        this.add(contactslist, 0, 1);
+        this.add(messageslist, 1, 1);
 
         HBox sendmessage = new HBox();
         TextField message = new TextField();
         message.setAlignment(Pos.CENTER_LEFT);
+        Region region3 = new Region();
+        HBox.setHgrow(region3, Priority.ALWAYS);
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_RIGHT);
-        sendmessage.getChildren().addAll(message, send);
+        sendmessage.getChildren().addAll(message, region3, send);
         this.add(sendmessage, 1, 2);
 
     }
