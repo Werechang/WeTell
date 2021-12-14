@@ -38,9 +38,23 @@ public class SQLManager {
     }
 
     protected void createTables() {
-        // users
+        // delete tables
         try {
-            String sql = "CREATE TABLE `users` (`id` int UNSIGNED NOT NULL AUTO_INCREMENT, `name` string, `hashedPassword` string, `salt` String, `profile_pic` string DEFAULT GETSPB(), PRIMARY KEY (id));";
+            Statement statement = conn.createStatement();
+            statement.execute("DROP TABLE users");
+            statement.execute("DROP TABLE messages");
+            statement.execute("DROP TABLE chats");
+            statement.execute("DROP TABLE contacts");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        try {
+            String sql = "CREATE TABLE users (" +
+                    "id INTEGER PRIMARY KEY ASC, " +
+                    "name TEXT NOT NULL UNIQUE, " +
+                    "hashedPassword TEXT NOT NULL, " +
+                    "salt TEXT NOT NULL, " +
+                    "profile_pic TEXT DEFAULT NULL)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("User table successfully created.");
@@ -49,7 +63,14 @@ public class SQLManager {
         }
         // messages
         try {
-            String sql = "CREATE TABLE `messages` (`id` int unsigned NOT NULL AUTO_INCREMENT, `sender_id` int, `chat_id` int , `msg_content` string, `send_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id), FOREIGN KEY (sender_id) REFERENCES users(id), FOREIGN KEY (chat_id) REFERENCES chats(id));";
+            String sql = "CREATE TABLE messages (" +
+                    "id INTEGER PRIMARY KEY ASC, " +
+                    "sender_id INTEGER, " +
+                    "chat_id INTEGER , " +
+                    "msg_content TEXT NOT NULL, " +
+                    "send_at TEXT DEFAULT '2021-12-1 12:00:00.000', " +
+                    "FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE NO ACTION, " +
+                    "FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE NO ACTION)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("Messages table successfully created.");
@@ -58,7 +79,10 @@ public class SQLManager {
         }
         // chats
         try {
-            String sql = "CREATE TABLE `chats` (`id` int unsigned NOT NULL AUTO_INCREMENT, `profile_pic` string, `name` string, PRIMARY KEY (id));";
+            String sql = "CREATE TABLE chats (" +
+                    "id INTEGER PRIMARY KEY ASC, " +
+                    "profile_pic TEXT, " +
+                    "name TEXT);";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("Chats table successfully created.");
@@ -67,7 +91,11 @@ public class SQLManager {
         }
         // contacts
         try {
-            String sql = "CREATE TABLE `contacts` (`user_id` int , `chat_id` int , FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (chat_id) REFERENCES chats(id));";
+            String sql = "CREATE TABLE contacts (" +
+                    "user_id INTEGER , " +
+                    "chat_id INTEGER , " +
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE NO ACTION, " +
+                    "FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE NO ACTION);";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("Contacts table successfully created.");
@@ -132,8 +160,8 @@ public class SQLManager {
     }
 
     public static class UserData {
-        private String salt;
-        private String hashedPassword;
+        private final String salt;
+        private final String hashedPassword;
 
         public UserData(String salt, String hashedPassword) {
             this.salt = salt;

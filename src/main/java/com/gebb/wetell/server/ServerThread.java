@@ -143,7 +143,10 @@ public class ServerThread extends Thread implements IConnectable {
             }
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             case MSG -> {
-
+                if (username == null) {
+                    sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
+                    return;
+                }
             }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
