@@ -105,6 +105,9 @@ public class ServerThread extends Thread implements IConnectable {
                 sendPacket(new PacketData(PacketType.KEY_TRANSFER_SUCCESS));
             }
             case LOGIN -> {
+                if (username != null) {
+                    sendPacket(new PacketData(PacketType.ERROR, "A user is currently logged in.".getBytes(StandardCharsets.UTF_8)));
+                }
                 if (!clientHasKeyTransferred) {
                     sendPacket(new PacketData(PacketType.KEYREQUEST), false);
                     return;
@@ -125,6 +128,9 @@ public class ServerThread extends Thread implements IConnectable {
                 }
                 }
             case SIGNIN -> {
+                if (username != null) {
+                    sendPacket(new PacketData(PacketType.ERROR, "A user is currently logged in.".getBytes(StandardCharsets.UTF_8)));
+                }
                 if (!clientHasKeyTransferred) {
                     sendPacket(new PacketData(PacketType.KEYREQUEST), false);
                     return;
@@ -153,6 +159,7 @@ public class ServerThread extends Thread implements IConnectable {
                     return;
                 }
             }
+            case LOGOUT -> username = null;
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }

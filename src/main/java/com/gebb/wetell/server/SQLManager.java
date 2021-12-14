@@ -2,7 +2,6 @@ package com.gebb.wetell.server;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SQLManager {
 
@@ -84,7 +83,7 @@ public class SQLManager {
             String sql = "CREATE TABLE chats (" +
                     "id INTEGER PRIMARY KEY ASC, " +
                     "profile_pic TEXT, " +
-                    "name TEXT);";
+                    "name TEXT)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("Chats table successfully created.");
@@ -114,7 +113,7 @@ public class SQLManager {
             pstmtq.setString(1, username);
             ResultSet result = pstmtq.executeQuery();
             if (result.next()) {
-                System.out.println("User already exists.");
+                throw new NullPointerException();
             } else {
                 PreparedStatement pstmt = conn.prepareStatement(sql);
                 pstmt.setString(1, username);
@@ -123,6 +122,19 @@ public class SQLManager {
                 pstmt.executeUpdate();
                 System.out.println("User successfully added.");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void addContact(int user_id, int chat_id) {
+        String sql = "INSERT INTO contacts(user_id,chat_id) VALUES(?,?)";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, user_id);
+            pstmt.setInt(2, chat_id);
+            pstmt.executeUpdate();
+            System.out.println("Contact successfully added.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -142,6 +154,21 @@ public class SQLManager {
         }
     }
 
+    protected int getUserId(String username) {
+        String sql = "SELECT id FROM users WHERE name = ?";
+        try {
+            PreparedStatement pstmtq = conn.prepareStatement(sql);
+            pstmtq.setString(1, username);
+            ResultSet result = pstmtq.executeQuery();
+            if (result.next()) {
+                return result.getInt("id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
     protected UserData getUser(String username) {
         String sql = "SELECT salt, hashedPassword FROM users WHERE name = ?";
         try {
@@ -157,7 +184,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ArrayList<MessageData> getMessagesForChat(int chat_id) {
+    protected ArrayList<MessageData> fetchMessagesForChat(int chat_id) {
         String sql = "SELECT sender_id, msg_content, sent_at FROM messages WHERE chat_id = ? ORDER BY id DESC LIMIT 20";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -166,6 +193,26 @@ public class SQLManager {
             ArrayList<MessageData> temp = new ArrayList<>(20);
             while (result.next()) {
                 temp.add(new MessageData(result.getInt("sender_id"), result.getString("msg_content"), result.getString("sent_at")));
+            }
+            if (temp.size() != 0) {
+                return temp;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    protected ArrayList<ChatData> fetchChatsForUser(int user_id) {
+        // TODO Create sql statement: get ids from contacts and use them to get the data from chats
+        String sql = "";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, user_id);
+            ResultSet result = pstmt.executeQuery();
+            ArrayList<ChatData> temp = new ArrayList<>(20);
+            while (result.next()) {
+                temp.add(new ChatData(result.getString("name")));
             }
             if (temp.size() != 0) {
                 return temp;
@@ -214,6 +261,18 @@ public class SQLManager {
 
         public String getSent_at() {
             return sent_at;
+        }
+    }
+
+    public static class ChatData {
+        private final String name;
+
+        public ChatData(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 }

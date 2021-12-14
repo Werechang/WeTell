@@ -13,7 +13,11 @@ public enum PacketType {
     NOTIFICATION(6),
     CLOSE_CONNECTION(7),
     KEY_TRANSFER_SUCCESS(8),
-    SIGNIN(9);
+    SIGNIN(9),
+    LOGOUT(10),
+    FETCH_MSGS(11),
+    FETCH_USERS(12),
+    ADD_CHAT(13);
 
     private final byte id;
 
