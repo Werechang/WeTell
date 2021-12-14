@@ -33,6 +33,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private boolean isCloseRequest;
     private boolean serverReceivedKey = false;
     private SceneManager sceneManager;
+    private boolean hasResources = false;
 
     public static void main(String[] args) {
         launch(args);
@@ -45,9 +46,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         connect();
         // Window preparations
         stage.setTitle("WeTell");
-        stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
+        if (hasResources) {
+            stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
+        }
 
-        sceneManager = new SceneManager(stage, this);
+        sceneManager = new SceneManager(stage, this, hasResources);
     }
 
     private void connect() {
@@ -112,6 +115,15 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     @Override
+    public void onSignInPress(String username, String password) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty() || username.length() < 4 || password.length() < 8) {
+            //TODO Show to user
+            System.exit(-784215347);
+        }
+        sendPacket(new PacketData(PacketType.SIGNIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Override
     public void execPacket(PacketData data) {
         if (data == null) {
             return;
@@ -135,6 +147,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 }
             }
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
+            case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
@@ -147,6 +160,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     @Override
     public void sendPacket(PacketData data, boolean isEncrypted) {
         try {
+            if (oos == null) {
+                return;
+            }
             oos.writeObject(new Datapacket(serverKey, data.getType(), isEncrypted, data.getData()));
             oos.flush();
             oos.reset();

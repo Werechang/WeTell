@@ -121,7 +121,7 @@ public class ServerThread extends Thread implements IConnectable {
                     }
                     username = usernamePassword[0];
                 } catch (NullPointerException e) {
-                    sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong".getBytes(StandardCharsets.UTF_8)));
+                    sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong.".getBytes(StandardCharsets.UTF_8)));
                 }
                 }
             case SIGNIN -> {
@@ -134,10 +134,17 @@ public class ServerThread extends Thread implements IConnectable {
                     return;
                 }
                 String salt = generateSalt();
-                WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
+                try {
+                    WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
+                } catch (NullPointerException e) {
+                    sendPacket(new PacketData(PacketType.ERROR, "Username already exists.".getBytes(StandardCharsets.UTF_8)));
+                }
                 username = usernamePassword[0];
             }
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
+            case MSG -> {
+
+            }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }

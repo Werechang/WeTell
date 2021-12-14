@@ -6,4 +6,5 @@ package com.gebb.wetell.client;
 public interface IGUICallable {
     void prepareClose();
     void onLoginPress(String username, String password);
+    void onSignInPress(String username, String password);
 }

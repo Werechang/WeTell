@@ -19,7 +19,7 @@ public class GUITest extends Application implements IGUICallable {
         stage.setTitle("WeTell");
         stage.getIcons().add(new Image(Objects.requireNonNull(WeTellClient.class.getResource("gui/icons/wetell.png")).toExternalForm()));
 
-        sceneManager = new SceneManager(stage, this);
+        sceneManager = new SceneManager(stage, this, true);
     }
 
     public static void initialize() {
@@ -33,6 +33,11 @@ public class GUITest extends Application implements IGUICallable {
 
     @Override
     public void onLoginPress(String username, String password) {
+        sceneManager.setScene(SceneType.MESSAGE);
+    }
+
+    @Override
+    public void onSignInPress(String username, String password) {
         sceneManager.setScene(SceneType.MESSAGE);
     }
 }

@@ -56,6 +56,7 @@ public class SignInPane extends GridPane {
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().add(signInButton);
         this.add(buttonBox, 1, 4);
+        signInButton.setOnAction( event -> callable.onSignInPress(userTextField.getText(), passwordField.getText()));
 
         Label disconnected = new Label("The Client is currently not connected to the Server");
         disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 11));

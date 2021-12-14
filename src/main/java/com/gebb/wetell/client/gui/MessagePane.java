@@ -76,13 +76,13 @@ public class MessagePane extends GridPane {
         this.add(messageslist, 1, 1);
 
         HBox sendmessage = new HBox();
-        TextField message = new TextField();
-        message.setAlignment(Pos.CENTER_LEFT);
+        TextField messageField = new TextField();
+        messageField.setAlignment(Pos.CENTER_LEFT);
         Region region3 = new Region();
         HBox.setHgrow(region3, Priority.ALWAYS);
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_RIGHT);
-        sendmessage.getChildren().addAll(message, region3, send);
+        sendmessage.getChildren().addAll(messageField, region3, send);
         this.add(sendmessage, 1, 2);
 
     }

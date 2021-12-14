@@ -12,8 +12,11 @@ public class SceneManager {
     private final SignInPane signInPane;
     private final MessagePane messagePane;
     private final Scene scene;
+    private final boolean hasResources;
 
-    public SceneManager(Stage stage, IGUICallable callable) {
+    public SceneManager(Stage stage, IGUICallable callable, boolean hasResources) {
+        this.hasResources = hasResources;
+
         stage.setOnCloseRequest(event -> callable.prepareClose());
         stage.setHeight(700);
         stage.setWidth(1000);
@@ -26,7 +29,9 @@ public class SceneManager {
 
         // Login is the first scene
         this.scene = new Scene(this.loginPane);
-        scene.getStylesheets().add(Objects.requireNonNull(LoginPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+        if (hasResources) {
+            scene.getStylesheets().add(Objects.requireNonNull(LoginPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+        }
         stage.setScene(scene);
         stage.show();
     }
@@ -34,18 +39,40 @@ public class SceneManager {
     public void setScene(SceneType type) {
         switch (type) {
             case LOGIN -> {
-                scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                if (hasResources) {
+                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                }
                 scene.setRoot(loginPane);
             }
             case SIGNIN -> {
-                scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                if (hasResources) {
+                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                }
                 scene.setRoot(signInPane);
             }
             case MESSAGE -> {
-                scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                if (hasResources) {
+                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                }
                 scene.setRoot(messagePane);
             }
             default -> System.err.println("Scene not supported or set");
         }
+    }
+
+    public void addCurrentUserInformation(String username) {
+
+    }
+
+    /**
+     * Add contact field to the contacts of this user
+     * @param username
+     */
+    public void addContactUserInformation(String username) {
+
+    }
+    // TODO timestamp
+    public void addMessage(String messageContent, String contact, boolean sentByThisUser) {
+
     }
 }
