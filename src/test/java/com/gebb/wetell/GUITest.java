@@ -40,4 +40,9 @@ public class GUITest extends Application implements IGUICallable {
     public void onSignInPress(String username, String password) {
         sceneManager.setScene(SceneType.MESSAGE);
     }
+
+    @Override
+    public void onLogoutPress() {
+        sceneManager.setScene(SceneType.LOGIN);
+    }
 }

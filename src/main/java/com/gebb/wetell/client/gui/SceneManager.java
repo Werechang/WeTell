@@ -25,7 +25,7 @@ public class SceneManager {
 
         this.loginPane = new LoginPane(callable, this);
         this.signInPane = new SignInPane(callable, this);
-        this.messagePane = new MessagePane(callable, this);
+        this.messagePane = new MessagePane(callable);
 
         // Login is the first scene
         this.scene = new Scene(this.loginPane);

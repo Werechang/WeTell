@@ -124,6 +124,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     @Override
+    public void onLogoutPress() {
+
+    }
+
+    @Override
     public void execPacket(PacketData data) {
         if (data == null) {
             return;

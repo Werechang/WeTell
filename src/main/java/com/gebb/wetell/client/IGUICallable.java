@@ -7,4 +7,5 @@ public interface IGUICallable {
     void prepareClose();
     void onLoginPress(String username, String password);
     void onSignInPress(String username, String password);
+    void onLogoutPress();
 }
