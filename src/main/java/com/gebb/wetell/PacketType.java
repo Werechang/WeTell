@@ -16,8 +16,9 @@ public enum PacketType {
     SIGNIN(9),
     LOGOUT(10),
     FETCH_MSGS(11),
-    FETCH_USERS(12),
-    ADD_CHAT(13);
+    FETCH_CHATS(12),
+    ADD_CHAT(13),
+    FETCH_USERNAME(14);
 
     private final byte id;
 

@@ -23,7 +23,6 @@ public class MessagePane extends GridPane {
         super();
         this.setAlignment(Pos.CENTER);
         this.setGridLinesVisible(true);
-        //this.getStylesheets().add(Objects.requireNonNull(MessagePane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
 
         //PB + Logout Area (0,0)
         HBox PbLogout = new HBox();

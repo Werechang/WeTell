@@ -1,6 +1,7 @@
 package com.gebb.wetell.client.gui;
 
 import com.gebb.wetell.client.IGUICallable;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -38,41 +39,40 @@ public class SceneManager {
     
     public void setScene(SceneType type) {
         switch (type) {
-            case LOGIN -> {
+            case LOGIN -> Platform.runLater(() -> {
                 if (hasResources) {
-                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
                 }
                 scene.setRoot(loginPane);
-            }
-            case SIGNIN -> {
+            });
+            case SIGNIN -> Platform.runLater(() -> {
                 if (hasResources) {
                     scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
                 }
                 scene.setRoot(signInPane);
-            }
-            case MESSAGE -> {
+            });
+            case MESSAGE -> Platform.runLater(() -> {
                 if (hasResources) {
                     scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
                 }
                 scene.setRoot(messagePane);
-            }
+            });
             default -> System.err.println("Scene not supported or set");
         }
     }
 
-    public void addCurrentUserInformation(String username) {
-
+    public void setCurrentUserInformation(String username) {
     }
 
     /**
      * Add contact field to the contacts of this user
-     * @param username
+     * @param name
      */
-    public void addContactUserInformation(String username) {
-
+    public void addChatInformation(String name) {
+        messagePane.addChat(name);
     }
-    // TODO timestamp
-    public void addMessage(String messageContent, String contact, boolean sentByThisUser) {
 
+    public void addMessage(String messageContent, int sentByUserId) {
+        messagePane.addMessage(messageContent);
     }
 }

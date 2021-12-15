@@ -19,6 +19,7 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class WeTellClient extends Application implements IConnectable, IGUICallable {
@@ -117,8 +118,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     @Override
     public void onSignInPress(String username, String password) {
         if (username == null || username.isEmpty() || password == null || password.isEmpty() || username.length() < 4 || password.length() < 4) {
-            //TODO Show to user
-            System.exit(-784215347);
+            return;
         }
         sendPacket(new PacketData(PacketType.SIGNIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
     }
@@ -139,7 +139,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             return;
         }
         switch (data.getType()) {
-            case LOGIN_SUCCESS -> sceneManager.setScene(SceneType.MESSAGE);
+            case LOGIN_SUCCESS -> {
+                sceneManager.setCurrentUserInformation(new String(data.getData(), StandardCharsets.UTF_8));
+                sceneManager.setScene(SceneType.MESSAGE);
+            }
             case KEY -> {
                 try {
                     serverKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
@@ -158,6 +161,50 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             }
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
+            case ADD_CHAT -> sceneManager.addChatInformation(new String(data.getData(), StandardCharsets.UTF_8));
+            case FETCH_MSGS -> {
+                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
+                try {
+                    ObjectInputStream is = new ObjectInputStream(bis);
+                    is.setObjectInputFilter(new DatapacketFilter());
+                    Object o = is.readObject();
+                    // Instanceof checks to stay safe
+                    if (o instanceof ArrayList) {
+                        ArrayList<?> messageData = (ArrayList<?>) o;
+                        for (Object msg : messageData) {
+                            if (msg instanceof MessageData) {
+                                MessageData m = (MessageData) msg;
+                                sceneManager.addMessage(m.getMsgContent(), m.getSentByUserId());
+                            }
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            case FETCH_CHATS -> {
+                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
+                try {
+                    ObjectInputStream is = new ObjectInputStream(bis);
+                    is.setObjectInputFilter(new DatapacketFilter());
+                    Object o = is.readObject();
+                    // Instanceof checks to stay safe
+                    if (o instanceof ArrayList) {
+                        ArrayList<?> chatData = (ArrayList<?>) o;
+                        for (Object chat : chatData) {
+                            if (chat instanceof ChatData) {
+                                ChatData c = (ChatData) chat;
+                                sceneManager.addChatInformation(c.getName());
+                            }
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            case FETCH_USERNAME -> {
+                // TODO What to do with it?
+            }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }

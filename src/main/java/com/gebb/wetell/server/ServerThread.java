@@ -9,10 +9,12 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
 
 public class ServerThread extends Thread implements IConnectable {
 
@@ -25,7 +27,8 @@ public class ServerThread extends Thread implements IConnectable {
     private boolean clientHasKeyTransferred = false;
     private boolean clientReceivedKey = false;
     private Thread listenThread;
-    private String username = null;
+    private int userId = -1;
+    private int selectedChatId = -1;
 
 
     protected ServerThread(@NotNull Socket clientSocket) {
@@ -71,7 +74,7 @@ public class ServerThread extends Thread implements IConnectable {
                     if (packet != null) {
                         execPacket(packet.getPacketData(clientReceivedKey ? keyPair.getPrivate() : null));
                     }
-                    Thread.sleep(2000);
+                    Thread.sleep(10);
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                     // Check if connection got closed
@@ -95,6 +98,13 @@ public class ServerThread extends Thread implements IConnectable {
             return;
         }
         switch (data.getType()) {
+            case KEYREQUEST -> {
+                try {
+                    sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                }
+            }
             case KEY -> {
                 try {
                     clientKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
@@ -104,60 +114,78 @@ public class ServerThread extends Thread implements IConnectable {
                 }
                 sendPacket(new PacketData(PacketType.KEY_TRANSFER_SUCCESS));
             }
-            case LOGIN -> {
-                if (username != null) {
-                    sendPacket(new PacketData(PacketType.ERROR, "A user is currently logged in.".getBytes(StandardCharsets.UTF_8)));
-                }
-                if (!clientHasKeyTransferred) {
-                    sendPacket(new PacketData(PacketType.KEYREQUEST), false);
-                    return;
-                }
-                String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
-                if (usernamePassword.length != 2) {
-                    return;
-                }
-                SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUser(usernamePassword[0]);
-                // If hashes do not match
-                if (ud.getHashedPassword().equals(hashString(usernamePassword[1]+ud.getSalt()))) {
-                    username = usernamePassword[0];
-                    sendPacket(new PacketData(PacketType.LOGIN_SUCCESS));
-                } else {
-                    sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong.".getBytes(StandardCharsets.UTF_8)));
-                }
-                }
-            case SIGNIN -> {
-                if (username != null) {
-                    sendPacket(new PacketData(PacketType.ERROR, "A user is currently logged in.".getBytes(StandardCharsets.UTF_8)));
-                }
-                if (!clientHasKeyTransferred) {
-                    sendPacket(new PacketData(PacketType.KEYREQUEST), false);
-                    return;
-                }
-                String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
-                if (usernamePassword.length != 2) {
-                    return;
-                }
-                if (usernamePassword[0].length() < 4 || usernamePassword[1].length() < 4) {
-                    sendPacket(new PacketData(PacketType.ERROR, "Username or password length must be at least 4.".getBytes(StandardCharsets.UTF_8)));
-                    return;
-                }
-                String salt = generateSalt();
-                try {
-                    WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
-                } catch (NullPointerException e) {
-                    sendPacket(new PacketData(PacketType.ERROR, "Username already exists.".getBytes(StandardCharsets.UTF_8)));
-                }
-                username = usernamePassword[0];
-                sendPacket(new PacketData(PacketType.LOGIN_SUCCESS));
-            }
+            case LOGIN -> login(data, false);
+            case SIGNIN -> login(data, true);
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             case MSG -> {
-                if (username == null) {
+                if (userId != -1) {
+                    if (selectedChatId != -1) {
+                        WeTellServer.getInstance().getSQLManager().newMessage(userId, selectedChatId, new String(data.getData(), StandardCharsets.UTF_8));
+                    } else {
+                        sendPacket(new PacketData(PacketType.ERROR, "You have not selected a chat".getBytes(StandardCharsets.UTF_8)));
+                    }
+                } else {
                     sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
-                    return;
                 }
             }
-            case LOGOUT -> username = null;
+            case LOGOUT -> userId = -1;
+            case FETCH_CHATS -> {
+                if (userId != -1 && clientReceivedKey) {
+                    ArrayList<ChatData> chatData = WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId);
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    try {
+                        ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+                        msgOS.writeObject(chatData);
+                        msgOS.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
+                }
+            }
+            case FETCH_MSGS -> {
+                if (userId != -1 && clientReceivedKey) {
+                    ByteBuffer chatIdWrapped = ByteBuffer.wrap(data.getData());
+                    ArrayList<MessageData> messageData = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    try {
+                        ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+                        msgOS.writeObject(messageData);
+                        msgOS.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
+                } else {
+                    sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+            case ADD_CHAT -> {
+                if (userId != -1) {
+                    ByteBuffer userOtherIdWrapped = ByteBuffer.wrap(data.getData());
+                    int userOtherId = userOtherIdWrapped.getInt();
+                    try {
+                        String chatName = WeTellServer.getInstance().getSQLManager().getUsername(userOtherId);
+                        int chatId = WeTellServer.getInstance().getSQLManager().addChat(chatName);
+                        WeTellServer.getInstance().getSQLManager().addContact(userOtherId, chatId);
+                        WeTellServer.getInstance().getSQLManager().addContact(userId, chatId);
+                        sendPacket(new PacketData(PacketType.ADD_CHAT, chatName.getBytes(StandardCharsets.UTF_8)));
+                        // TODO Fetch chats for other user
+                    } catch (Exception e) {
+                        sendPacket(new PacketData(PacketType.ERROR, "User does not exist.".getBytes(StandardCharsets.UTF_8)));
+                    }
+                } else {
+                    sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+            case FETCH_USERNAME -> {
+                if (userId != -1 && clientReceivedKey) {
+                    ByteBuffer userIdWrapped = ByteBuffer.wrap(data.getData());
+                    sendPacket(new PacketData(PacketType.FETCH_USERNAME, WeTellServer.getInstance().getSQLManager().getUsername(userIdWrapped.getInt()).getBytes(StandardCharsets.UTF_8)));
+                } else {
+                    sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
@@ -195,5 +223,47 @@ public class ServerThread extends Thread implements IConnectable {
         byte[] a = new byte[16];
         random.nextBytes(a);
         return new String(a, StandardCharsets.UTF_8);
+    }
+
+    // isFirstLogin means signIn
+    private void login(PacketData data, boolean isFirstLogin) {
+        if (userId != -1) {
+            sendPacket(new PacketData(PacketType.ERROR, "A user is currently logged in.".getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+        if (!clientHasKeyTransferred) {
+            sendPacket(new PacketData(PacketType.KEYREQUEST), false);
+            return;
+        }
+        String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
+        if (usernamePassword.length != 2) {
+            sendPacket(new PacketData(PacketType.ERROR, "The login data is corrupted. Try again.".getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+        if (usernamePassword[0].length() < 4 || usernamePassword[1].length() < 4) {
+            sendPacket(new PacketData(PacketType.ERROR, "Username or password length must be at least 4.".getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+        if (isFirstLogin) {
+            String salt = generateSalt();
+            try {
+                WeTellServer.getInstance().getSQLManager().addUser(usernamePassword[0], hashString(usernamePassword[1]+salt), salt);
+                userId = WeTellServer.getInstance().getSQLManager().getUserId(usernamePassword[0]);
+            } catch (NullPointerException e) {
+                sendPacket(new PacketData(PacketType.ERROR, "Username already exists.".getBytes(StandardCharsets.UTF_8)));
+            }
+            sendPacket(new PacketData(PacketType.LOGIN_SUCCESS, usernamePassword[0].getBytes(StandardCharsets.UTF_8)));
+        } else {
+            try {
+                SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUserData(usernamePassword[0]);
+                // If hashes match
+                if (ud.getHashedPassword().equals(hashString(usernamePassword[1]+ud.getSalt()))) {
+                    userId = WeTellServer.getInstance().getSQLManager().getUserId(usernamePassword[0]);
+                    sendPacket(new PacketData(PacketType.LOGIN_SUCCESS, usernamePassword[0].getBytes(StandardCharsets.UTF_8)));
+                }
+            } catch (NullPointerException ignored) {
+                sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong.".getBytes(StandardCharsets.UTF_8)));
+            }
+        }
     }
 }

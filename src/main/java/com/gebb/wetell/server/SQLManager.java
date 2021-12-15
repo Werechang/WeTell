@@ -1,5 +1,8 @@
 package com.gebb.wetell.server;
 
+import com.gebb.wetell.ChatData;
+import com.gebb.wetell.MessageData;
+
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -24,17 +27,6 @@ public class SQLManager {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    protected void createDatabase() {
-        try {
-            String sql = "CREATE DATABASE wetell;";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.executeUpdate();
-            System.out.println("Database successfully created.");
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -105,8 +97,8 @@ public class SQLManager {
         }
     }
 
-    protected void addUser(String username, String hashedPassword, String salt) {
-        String sqlq = "SELECT name FROM users WHERE name = ?";
+    protected int addUser(String username, String hashedPassword, String salt) {
+        String sqlq = "SELECT id FROM users WHERE name = ?";
         String sql = "INSERT INTO users(name,hashedPassword,salt) VALUES(?,?,?)";
         try {
             PreparedStatement pstmtq = conn.prepareStatement(sqlq);
@@ -121,10 +113,29 @@ public class SQLManager {
                 pstmt.setString(3, salt);
                 pstmt.executeUpdate();
                 System.out.println("User successfully added.");
+                PreparedStatement getId = conn.prepareStatement(sqlq);
+                getId.setString(1, username);
+                ResultSet set = getId.executeQuery();
+                return set.getInt("id");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        throw new NullPointerException();
+    }
+
+    protected int addChat(String name) {
+        try {
+            String sql = "INSERT INTO chats(name) VALUES(?)";
+            PreparedStatement statement = conn.prepareStatement(sql);
+            statement.setString(1, name);
+            statement.executeUpdate();
+            ResultSet set = statement.getGeneratedKeys();
+            return set.getInt("id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
     }
 
     protected void addContact(int user_id, int chat_id) {
@@ -169,7 +180,22 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected UserData getUser(String username) {
+    protected String getUsername(int userId) {
+        String sql = "SELECT name FROM users WHERE id = ?";
+        try {
+            PreparedStatement pstmtq = conn.prepareStatement(sql);
+            pstmtq.setInt(1, userId);
+            ResultSet result = pstmtq.executeQuery();
+            if (result.next()) {
+                return result.getString("name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    protected UserData getUserData(String username) {
         String sql = "SELECT salt, hashedPassword FROM users WHERE name = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -240,39 +266,4 @@ public class SQLManager {
         }
     }
 
-    public static class MessageData {
-        private final int sender_id;
-        private final String msg_content;
-        private final String sent_at;
-
-        public MessageData(int sender_id, String msg_content, String sent_at) {
-            this.sender_id = sender_id;
-            this.msg_content = msg_content;
-            this.sent_at = sent_at;
-        }
-
-        public int getSender_id() {
-            return sender_id;
-        }
-
-        public String getMsg_content() {
-            return msg_content;
-        }
-
-        public String getSent_at() {
-            return sent_at;
-        }
-    }
-
-    public static class ChatData {
-        private final String name;
-
-        public ChatData(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
 }
