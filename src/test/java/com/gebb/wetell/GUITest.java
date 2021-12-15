@@ -50,4 +50,19 @@ public class GUITest extends Application implements IGUICallable {
     public void onOpenPress() {
 
     }
+
+    @Override
+    public void onSelectChat(int chatId) {
+
+    }
+
+    @Override
+    public void onSendMessage(String content) {
+
+    }
+
+    @Override
+    public void onAddChat(String chatName) {
+
+    }
 }

@@ -152,8 +152,18 @@ public class SQLManager {
     }
 
     protected void newMessage(int sender_id, int chat_id, String msg_content) {
+        String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
         try {
+            // Check if the user is even in the chat
+            PreparedStatement statement = conn.prepareStatement(sqlq);
+            statement.setInt(1, chat_id);
+            statement.setInt(2, sender_id);
+            ResultSet set = statement.executeQuery();
+            if (!set.next()) {
+                throw new NullPointerException();
+            }
+
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, sender_id);
             pstmt.setInt(2, chat_id);
@@ -218,7 +228,7 @@ public class SQLManager {
             ResultSet result = pstmt.executeQuery();
             ArrayList<MessageData> temp = new ArrayList<>(20);
             while (result.next()) {
-                temp.add(new MessageData(result.getInt("sender_id"), result.getString("msg_content"), result.getString("sent_at")));
+                temp.add(new MessageData(result.getInt("sender_id"), chat_id, result.getString("msg_content"), result.getString("sent_at")));
             }
             if (temp.size() != 0) {
                 return temp;
@@ -230,15 +240,16 @@ public class SQLManager {
     }
 
     protected ArrayList<ChatData> fetchChatsForUser(int user_id) {
-        // TODO Create sql statement: get ids from contacts and use them to get the data from chats
-        String sql = "";
+        String sql = "SELECT contacts.chat_id, chats.name FROM contacts " +
+                "LEFT JOIN chats on contacts.chat_id = chats.id " +
+                "WHERE contacts.user_id = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, user_id);
             ResultSet result = pstmt.executeQuery();
             ArrayList<ChatData> temp = new ArrayList<>(20);
             while (result.next()) {
-                temp.add(new ChatData(result.getString("name")));
+                temp.add(new ChatData(result.getString("chats.name"), result.getInt("contacts.chat_id")));
             }
             if (temp.size() != 0) {
                 return temp;

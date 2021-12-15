@@ -13,6 +13,7 @@ import javax.crypto.IllegalBlockSizeException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -35,6 +36,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private boolean serverReceivedKey = false;
     private SceneManager sceneManager;
     private boolean hasResources = true;
+    private int selectedChat = -1;
 
     public static void main(String[] args) {
         launch(args);
@@ -125,12 +127,37 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLogoutPress() {
-        //TODO
+        sendPacket(new PacketData(PacketType.LOGOUT));
     }
 
     @Override
     public void onOpenPress() {
-        //TODO
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+        sendPacket(new PacketData(PacketType.ADD_CHAT));
+    }
+
+    @Override
+    public void onSelectChat(int chatId) {
+        selectedChat = chatId;
+    }
+
+    @Override
+    public void onSendMessage(String content) {
+        MessageData messageData = new MessageData(-1, selectedChat, content, null);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+            msgOS.writeObject(messageData);
+            msgOS.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        sendPacket(new PacketData(PacketType.MSG, bos.toByteArray()));
+    }
+
+    @Override
+    public void onAddChat(String chatName) {
+
     }
 
     @Override
@@ -161,7 +188,21 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             }
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
-            case ADD_CHAT -> sceneManager.addChatInformation(new String(data.getData(), StandardCharsets.UTF_8));
+            case ADD_CHAT -> {
+                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
+                try {
+                    ObjectInputStream is = new ObjectInputStream(bis);
+                    is.setObjectInputFilter(new DatapacketFilter());
+                    Object o = is.readObject();
+                    // Instanceof checks to stay safe
+                    if (o instanceof ChatData) {
+                        ChatData chatData = (ChatData) o;
+                        sceneManager.addChatInformation(chatData.getName(), chatData.getId());
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
             case FETCH_MSGS -> {
                 ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
                 try {
@@ -194,7 +235,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                         for (Object chat : chatData) {
                             if (chat instanceof ChatData) {
                                 ChatData c = (ChatData) chat;
-                                sceneManager.addChatInformation(c.getName());
+                                sceneManager.addChatInformation(c.getName(), c.getId());
                             }
                         }
                     }
@@ -230,9 +271,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     public void prepareClose() {
         isCloseRequest = true;
-        if (oos != null) {
-            sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
-        }
+        sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
         System.exit(0);
     }
 }

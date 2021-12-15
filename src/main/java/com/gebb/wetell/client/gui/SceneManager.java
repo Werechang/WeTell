@@ -68,7 +68,7 @@ public class SceneManager {
      * Add contact field to the contacts of this user
      * @param name
      */
-    public void addChatInformation(String name) {
+    public void addChatInformation(String name, int id) {
         messagePane.addChat(name);
     }
 
