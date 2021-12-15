@@ -8,4 +8,5 @@ public interface IGUICallable {
     void onLoginPress(String username, String password);
     void onSignInPress(String username, String password);
     void onLogoutPress();
+    void onOpenPress();
 }

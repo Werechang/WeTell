@@ -45,4 +45,9 @@ public class GUITest extends Application implements IGUICallable {
     public void onLogoutPress() {
         sceneManager.setScene(SceneType.LOGIN);
     }
+
+    @Override
+    public void onOpenPress() {
+
+    }
 }

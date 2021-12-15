@@ -8,10 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
@@ -40,6 +37,7 @@ public class MessagePane extends GridPane {
         Button Logout = new Button("Logout");
         Logout.setAlignment(Pos.CENTER_RIGHT);
         Logout.setOnAction(event -> callable.onLogoutPress());
+        Logout.setMinWidth(Region.USE_PREF_SIZE);
         PbLogout.getChildren().addAll(userpbView, region1, Logout);
         this.add(PbLogout, 0, 0);
 
@@ -58,9 +56,25 @@ public class MessagePane extends GridPane {
         contactpbname.getChildren().addAll(contactpbView, region2, Contactname);
         this.add(contactpbname, 1, 0);
 
+        // Open New Chat Area ()
+        HBox newChat = new HBox();
+        newChat.setAlignment(Pos.CENTER);
+        newChat.setPadding(new Insets(8, 8, 8, 8));
+        TextField username = new TextField();
+        username.setAlignment(Pos.CENTER_LEFT);
+        username.setPrefSize(200, 10);
+        Region region5 = new Region();
+        region5.setPrefWidth(8);
+        Button open = new Button("Öffnen");
+        open.setAlignment(Pos.CENTER_LEFT);
+        open.setOnAction(event -> callable.onOpenPress());
+        open.setMinWidth(Region.USE_PREF_SIZE);
+        newChat.getChildren().addAll(username, region5, open);
+        this.add(newChat, 0, 1);
+
         //Chat & Message List Area (0,1/1,1)
-        this.add(chatlist, 0, 1, 1, 2);
-        this.add(messageslist, 1, 1);
+        this.add(chatlist, 0, 2); //TODO With Rowspan its looks weird
+        this.add(messageslist, 1, 1, 1, 2);
 
         //Send Message Area (1,2)
         HBox sendmessage = new HBox();
@@ -68,13 +82,14 @@ public class MessagePane extends GridPane {
         sendmessage.setPadding(new Insets(8, 8, 8, 8));
         TextField messageField = new TextField();
         messageField.setAlignment(Pos.CENTER_LEFT);
-        messageField.setPrefSize(330, 10);
+        messageField.setPrefSize(400, 10);
         Region region3 = new Region();
         region3.setPrefWidth(8);
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_LEFT);
+        send.setMinWidth(Region.USE_PREF_SIZE);
         sendmessage.getChildren().addAll(messageField, region3, send);
-        this.add(sendmessage, 1, 2);
+        this.add(sendmessage, 1, 3);
     }
 
     protected void addChat(String name) {

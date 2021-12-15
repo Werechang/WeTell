@@ -125,7 +125,12 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onLogoutPress() {
+        //TODO
+    }
 
+    @Override
+    public void onOpenPress() {
+        //TODO
     }
 
     @Override
