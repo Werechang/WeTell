@@ -116,14 +116,12 @@ public class ServerThread extends Thread implements IConnectable {
                 if (usernamePassword.length != 2) {
                     return;
                 }
-                try {
-                    SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUser(usernamePassword[0]);
-                    // If hashes do not match
-                    if (!ud.getHashedPassword().equals(hashString(usernamePassword[1]+ud.getSalt()))) {
-                        throw new NullPointerException();
-                    }
+                SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUser(usernamePassword[0]);
+                // If hashes do not match
+                if (ud.getHashedPassword().equals(hashString(usernamePassword[1]+ud.getSalt()))) {
                     username = usernamePassword[0];
-                } catch (NullPointerException e) {
+                    sendPacket(new PacketData(PacketType.LOGIN_SUCCESS));
+                } else {
                     sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong.".getBytes(StandardCharsets.UTF_8)));
                 }
                 }
