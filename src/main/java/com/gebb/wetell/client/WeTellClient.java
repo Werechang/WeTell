@@ -37,6 +37,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private SceneManager sceneManager;
     private boolean hasResources = true;
     private int selectedChat = -1;
+    private boolean isLoggedIn = false;
 
     public static void main(String[] args) {
         launch(args);
@@ -128,6 +129,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     @Override
     public void onLogoutPress() {
         sendPacket(new PacketData(PacketType.LOGOUT));
+        selectedChat = -1;
     }
 
     @Override
@@ -143,21 +145,25 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onSendMessage(String content) {
-        MessageData messageData = new MessageData(-1, selectedChat, content, null);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream msgOS = new ObjectOutputStream(bos);
-            msgOS.writeObject(messageData);
-            msgOS.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (selectedChat != -1 && serverReceivedKey && isLoggedIn) {
+            MessageData messageData = new MessageData(-1, selectedChat, content, null);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            try {
+                ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+                msgOS.writeObject(messageData);
+                msgOS.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            sendPacket(new PacketData(PacketType.MSG, bos.toByteArray()));
         }
-        sendPacket(new PacketData(PacketType.MSG, bos.toByteArray()));
     }
 
     @Override
     public void onAddChat(String chatName) {
-
+        if (serverReceivedKey && isLoggedIn) {
+            ChatData chatData = new ChatData(chatName, -1);
+        }
     }
 
     @Override
@@ -169,6 +175,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             case LOGIN_SUCCESS -> {
                 sceneManager.setCurrentUserInformation(new String(data.getData(), StandardCharsets.UTF_8));
                 sceneManager.setScene(SceneType.MESSAGE);
+                isLoggedIn = true;
             }
             case KEY -> {
                 try {

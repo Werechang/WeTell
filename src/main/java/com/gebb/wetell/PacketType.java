@@ -3,6 +3,9 @@ package com.gebb.wetell;
 import org.jetbrains.annotations.NotNull;
 
 public enum PacketType {
+    /* Some are used on the server but not on the client and the other way around. They may have different meaning
+     * depending on if it is the server or the client.
+     */
     UNKNOWN(-1),
     KEY(0),
     KEYREQUEST(1),
@@ -17,8 +20,10 @@ public enum PacketType {
     LOGOUT(10),
     FETCH_MSGS(11),
     FETCH_CHATS(12),
+    // Server side: add a new chat to the db | Client side: add chat information to the gui
     ADD_CHAT(13),
-    FETCH_USERNAME(14);
+    FETCH_USERNAME(14),
+    ADD_USER_TO_CHAT(15);
 
     private final byte id;
 

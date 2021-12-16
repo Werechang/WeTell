@@ -115,4 +115,8 @@ public class WeTellServer extends ServerSocket {
     protected SQLManager getSQLManager() {
         return sqlManager;
     }
+
+    protected Collection<ServerThread> getThreads() {
+        return threads.values();
+    }
 }

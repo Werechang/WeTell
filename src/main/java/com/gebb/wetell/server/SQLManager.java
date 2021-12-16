@@ -139,8 +139,15 @@ public class SQLManager {
     }
 
     protected void addContact(int user_id, int chat_id) {
+        String sqlq = "SELECT * FROM contacts WHERE user_id = ? AND chat_id = ?";
         String sql = "INSERT INTO contacts(user_id,chat_id) VALUES(?,?)";
         try {
+            PreparedStatement statement = conn.prepareStatement(sqlq);
+            statement.setInt(1, user_id);
+            statement.setInt(2, chat_id);
+            if (statement.executeQuery().next()) {
+                throw new NullPointerException();
+            }
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, user_id);
             pstmt.setInt(2, chat_id);
@@ -213,6 +220,21 @@ public class SQLManager {
             ResultSet result = pstmt.executeQuery();
             if (result.next()) {
                 return new UserData(result.getString("salt"), result.getString("hashedPassword"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    protected String getChatName(int chatId) {
+        String sql = "SELECT name FROM chats WHERE id = ?";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, chatId);
+            ResultSet result = pstmt.executeQuery();
+            if (result.next()) {
+                return result.getString("name");
             }
         } catch (SQLException e) {
             e.printStackTrace();
