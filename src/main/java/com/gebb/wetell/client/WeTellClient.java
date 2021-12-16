@@ -185,14 +185,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 }
                 sendPacket(new PacketData(PacketType.KEY_TRANSFER_SUCCESS));
             }
-            case MSG -> System.out.println(new String(data.getData(), StandardCharsets.UTF_8));
-            case KEYREQUEST -> {
-                try {
-                    sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())));
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
+            case MSG -> {
+
             }
+            case KEYREQUEST -> sendKey();
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
             case ADD_CHAT -> {
@@ -257,6 +253,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         }
     }
 
+
     @Override
     public void sendPacket(@NotNull PacketData data) {
         sendPacket(data, serverReceivedKey);
@@ -275,6 +272,32 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             e.printStackTrace();
         }
     }
+
+    @Override
+    public boolean isLoggedInAndSecureConnection() {
+        if (!isLoggedIn) {
+            return false;
+        }
+        if (!serverReceivedKey) {
+            sendKey();
+            return false;
+        }
+        if (serverKey == null) {
+            sendPacket(new PacketData(PacketType.KEYREQUEST), false);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void sendKey() {
+        try {
+            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void prepareClose() {
         isCloseRequest = true;

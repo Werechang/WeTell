@@ -158,9 +158,10 @@ public class SQLManager {
         }
     }
 
-    protected void newMessage(int sender_id, int chat_id, String msg_content) {
+    protected String newMessage(int sender_id, int chat_id, String msg_content) {
         String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
+        String getTime = "SELECT sent_at FROM messages WHERE id = ?";
         try {
             // Check if the user is even in the chat
             PreparedStatement statement = conn.prepareStatement(sqlq);
@@ -177,9 +178,14 @@ public class SQLManager {
             pstmt.setString(3, msg_content);
             pstmt.executeUpdate();
             System.out.println("Message successfully added.");
+
+            PreparedStatement preparedStatement = conn.prepareStatement(getTime);
+            preparedStatement.setInt(1, pstmt.getGeneratedKeys().getInt("id"));
+            return preparedStatement.executeQuery().getString("sent_at");
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        throw new NullPointerException();
     }
 
     protected int getUserId(String username) {
@@ -235,6 +241,25 @@ public class SQLManager {
             ResultSet result = pstmt.executeQuery();
             if (result.next()) {
                 return result.getString("name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    protected ArrayList<Integer> getUsersInChat(int chatId) {
+        String sql = "SELECT user_id FROM contacts WHERE chat_id = ?";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, chatId);
+            ResultSet result = pstmt.executeQuery();
+            ArrayList<Integer> temp = new ArrayList<>(2);
+            while (result.next()) {
+                temp.add(result.getInt("user_id"));
+            }
+            if (temp.size() != 0) {
+                return temp;
             }
         } catch (SQLException e) {
             e.printStackTrace();

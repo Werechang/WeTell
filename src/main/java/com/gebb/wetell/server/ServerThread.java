@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
 
 public class ServerThread extends Thread implements IConnectable {
 
@@ -23,7 +24,6 @@ public class ServerThread extends Thread implements IConnectable {
     private final KeyPair keyPair;
     private boolean isClientConnected = true;
     private PublicKey clientKey = null;
-    private boolean clientHasKeyTransferred = false;
     private boolean clientReceivedKey = false;
     private Thread listenThread;
     private int userId = -1;
@@ -95,7 +95,6 @@ public class ServerThread extends Thread implements IConnectable {
             case KEY -> {
                 try {
                     clientKey = KeyPairManager.byteStreamToRSAPublicKey(data.getData());
-                    clientHasKeyTransferred = true;
                 } catch (InvalidKeySpecException e) {
                     e.printStackTrace();
                 }
@@ -183,7 +182,7 @@ public class ServerThread extends Thread implements IConnectable {
     // isFirstLogin means signIn
     private void login(PacketData data, boolean isFirstLogin) {
         if (userId == -1) {
-            if (clientHasKeyTransferred) {
+            if (clientKey != null) {
                 String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
                 if (usernamePassword.length == 2) {
                     if (usernamePassword[0].length() >= 4 || usernamePassword[1].length() >= 4) {
@@ -222,7 +221,8 @@ public class ServerThread extends Thread implements IConnectable {
 
     }
 
-    private boolean isLoggedInAndSecureConnection() {
+    @Override
+    public boolean isLoggedInAndSecureConnection() {
         if (userId == -1) {
             sendPacket(new PacketData(PacketType.ERROR, "You are not logged in".getBytes(StandardCharsets.UTF_8)));
             return false;
@@ -231,14 +231,15 @@ public class ServerThread extends Thread implements IConnectable {
             sendKey();
             return false;
         }
-        if (!clientHasKeyTransferred) {
+        if (clientKey == null) {
             sendPacket(new PacketData(PacketType.KEYREQUEST), false);
             return false;
         }
         return true;
     }
 
-    private void sendKey() {
+    @Override
+    public void sendKey() {
         try {
             sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
         } catch (NoSuchAlgorithmException e) {
@@ -320,7 +321,8 @@ public class ServerThread extends Thread implements IConnectable {
                         sendPacket(new PacketData(PacketType.ERROR, "Chat not specified.".getBytes(StandardCharsets.UTF_8)));
                     } else {
                         try {
-                            WeTellServer.getInstance().getSQLManager().newMessage(userId, messageData.getChatId(), messageData.getMsgContent());
+                            String time = WeTellServer.getInstance().getSQLManager().newMessage(userId, messageData.getChatId(), messageData.getMsgContent());
+                            sendMessageToChat(new MessageData(userId, messageData.getChatId(), messageData.getMsgContent(), time));
                         } catch (NullPointerException e) {
                             sendPacket(new PacketData(PacketType.ERROR, "User is not in the chat.".getBytes(StandardCharsets.UTF_8)));
                         }
@@ -357,6 +359,32 @@ public class ServerThread extends Thread implements IConnectable {
         try {
             ObjectOutputStream os = new ObjectOutputStream(bos);
             os.writeObject(new ChatData(chatName, chatId));
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
+    }
+
+    private void sendMessageToChat(MessageData messageData) {
+        try {
+            ArrayList<Integer> userIds = WeTellServer.getInstance().getSQLManager().getUsersInChat(messageData.getChatId());
+            for (ServerThread thread : WeTellServer.getInstance().getThreads()) {
+                if (userIds.contains(thread.userId)) {
+                    fetchMessageData(messageData);
+                }
+            }
+        } catch (NullPointerException e) {
+            // Case: there are no users in the chat
+            e.printStackTrace();
+        }
+    }
+
+    private void fetchMessageData(MessageData messageData) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream os = new ObjectOutputStream(bos);
+            os.writeObject(messageData);
             os.flush();
         } catch (IOException e) {
             e.printStackTrace();
