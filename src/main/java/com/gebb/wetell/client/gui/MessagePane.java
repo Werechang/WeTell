@@ -66,7 +66,7 @@ public class MessagePane extends GridPane {
         region5.setPrefWidth(8);
         Button open = new Button("Öffnen");
         open.setAlignment(Pos.CENTER_LEFT);
-        open.setOnAction(event -> callable.onOpenPress());
+        open.setOnAction(event -> callable.onAddChat(username.getText()));
         open.setMinWidth(Region.USE_PREF_SIZE);
         newChat.getChildren().addAll(username, region5, open);
         this.add(newChat, 0, 1);
@@ -88,6 +88,7 @@ public class MessagePane extends GridPane {
         send.setAlignment(Pos.CENTER_LEFT);
         send.setMinWidth(Region.USE_PREF_SIZE);
         sendmessage.getChildren().addAll(messageField, region3, send);
+        send.setOnAction(event -> callable.onSendMessage(messageField.getText()));
         this.add(sendmessage, 1, 3);
     }
 
@@ -113,5 +114,9 @@ public class MessagePane extends GridPane {
         messageLabel.setAlignment(Pos.CENTER_RIGHT); //TODO Change Alignment left or right due sender_Id (if = logged in user_id)
 
         messageslist.getItems().add(messageLabel);
+    }
+
+    protected void resetInputAndFields() {
+
     }
 }

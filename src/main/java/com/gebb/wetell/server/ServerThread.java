@@ -104,41 +104,48 @@ public class ServerThread extends Thread implements IConnectable {
             case SIGNIN -> login(data, true);
             case KEY_TRANSFER_SUCCESS -> clientReceivedKey = true;
             case MSG -> addMessage(data.getData());
-            case LOGOUT -> userId = -1;
+            case LOGOUT -> {
+                userId = -1;
+                sendPacket(new PacketData(PacketType.LOGOUT));
+            }
             case FETCH_CHATS -> {
                 if (isLoggedInAndSecureConnection()) {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
                     try {
-                        ObjectOutputStream chatOS = new ObjectOutputStream(bos);
-                        chatOS.writeObject(WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId));
-                        chatOS.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        ArrayList<ChatData> chatData = WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId);
+                        if (chatData.size() != 0) {
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                            try {
+                                ObjectOutputStream chatOS = new ObjectOutputStream(bos);
+                                chatOS.writeObject(chatData);
+                                chatOS.flush();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
+                        }
+                    } catch (NullPointerException e) {
+                        sendPacket(new PacketData(PacketType.ERROR, "An error occurred while reading the chat data.".getBytes(StandardCharsets.UTF_8)));
                     }
-                    sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
                 }
             }
             case FETCH_MSGS -> {
                 if (isLoggedInAndSecureConnection()) {
                     ByteBuffer chatIdWrapped = ByteBuffer.wrap(data.getData());
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    try {
-                        ObjectOutputStream msgOS = new ObjectOutputStream(bos);
-                        msgOS.writeObject(WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt()));
-                        msgOS.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    ArrayList<MessageData> messageData = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
+                    if (messageData.size() != 0) {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        try {
+                            ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+                            msgOS.writeObject(messageData);
+                            msgOS.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
                     }
-                    sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
                 }
             }
             case ADD_CHAT -> addChat(data.getData());
-            case FETCH_USERNAME -> {
-                if (isLoggedInAndSecureConnection()) {
-                    ByteBuffer userIdWrapped = ByteBuffer.wrap(data.getData());
-                    sendPacket(new PacketData(PacketType.FETCH_USERNAME, WeTellServer.getInstance().getSQLManager().getUsername(userIdWrapped.getInt()).getBytes(StandardCharsets.UTF_8)));
-                }
-            }
             case ADD_USER_TO_CHAT -> addUserToChat(data.getData());
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
@@ -157,6 +164,10 @@ public class ServerThread extends Thread implements IConnectable {
             oos.reset();
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
+        }
+        System.out.println("Sent packet: " + data.getType());
+        if (data.getType() == PacketType.ERROR) {
+            System.out.println("Error");
         }
     }
 
@@ -183,6 +194,7 @@ public class ServerThread extends Thread implements IConnectable {
     private void login(PacketData data, boolean isFirstLogin) {
         if (userId == -1) {
             if (clientKey != null) {
+                // [0] username | [1] password
                 String[] usernamePassword = new String(data.getData(), StandardCharsets.UTF_8).split("\00");
                 if (usernamePassword.length == 2) {
                     if (usernamePassword[0].length() >= 4 || usernamePassword[1].length() >= 4) {
@@ -194,6 +206,9 @@ public class ServerThread extends Thread implements IConnectable {
                                 sendPacket(new PacketData(PacketType.ERROR, "Username already exists.".getBytes(StandardCharsets.UTF_8)));
                             }
                             sendPacket(new PacketData(PacketType.LOGIN_SUCCESS, usernamePassword[0].getBytes(StandardCharsets.UTF_8)));
+                            ByteBuffer buffer = ByteBuffer.allocate(4);
+                            buffer.putInt(userId);
+                            sendPacket(new PacketData(PacketType.USER_ID, buffer.array()));
                         } else {
                             try {
                                 SQLManager.UserData ud = WeTellServer.getInstance().getSQLManager().getUserData(usernamePassword[0]);
@@ -264,9 +279,10 @@ public class ServerThread extends Thread implements IConnectable {
                         try {
                             chatId = WeTellServer.getInstance().getSQLManager().addChat(chatData.getName());
                         } catch (NullPointerException e) {
-                            sendPacket(new PacketData(PacketType.ERROR, "User is already in this chat.".getBytes(StandardCharsets.UTF_8)));
+                            sendPacket(new PacketData(PacketType.ERROR, "Something went wrong while creating a new chat.".getBytes(StandardCharsets.UTF_8)));
                             return;
                         }
+                        addUserToChat(new ContactData(chatId, userId));
                         fetchChatData(chatId, chatData.getName());
                     }
                 }
@@ -303,6 +319,16 @@ public class ServerThread extends Thread implements IConnectable {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void addUserToChat(ContactData contactData) {
+        if (isLoggedInAndSecureConnection()) {
+            try {
+                WeTellServer.getInstance().getSQLManager().addContact(contactData.getUserId(), contactData.getChatId());
+            } catch (NullPointerException e) {
+                sendPacket(new PacketData(PacketType.ERROR, "User is already in this chat.".getBytes(StandardCharsets.UTF_8)));
             }
         }
     }
@@ -351,7 +377,7 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
+        sendPacket(new PacketData(PacketType.FETCH_CHAT, bos.toByteArray()));
     }
 
     private void fetchChatData(int chatId, String chatName) {
@@ -363,7 +389,7 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
+        sendPacket(new PacketData(PacketType.FETCH_CHAT, bos.toByteArray()));
     }
 
     private void sendMessageToChat(MessageData messageData) {
@@ -389,6 +415,6 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
+        sendPacket(new PacketData(PacketType.FETCH_MESSAGE, bos.toByteArray()));
     }
 }

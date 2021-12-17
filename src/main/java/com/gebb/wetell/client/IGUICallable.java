@@ -8,8 +8,8 @@ public interface IGUICallable {
     void onLoginPress(String username, String password);
     void onSignInPress(String username, String password);
     void onLogoutPress();
-    void onOpenPress();
     void onSelectChat(int chatId);
     void onSendMessage(String content);
     void onAddChat(String chatName);
+    void onAddUserToChat(int chatId, int userId);
 }

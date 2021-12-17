@@ -5,6 +5,7 @@ import com.gebb.wetell.MessageData;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class SQLManager {
 
@@ -127,11 +128,18 @@ public class SQLManager {
     protected int addChat(String name) {
         try {
             String sql = "INSERT INTO chats(name) VALUES(?)";
-            PreparedStatement statement = conn.prepareStatement(sql);
+            PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             statement.setString(1, name);
             statement.executeUpdate();
             ResultSet set = statement.getGeneratedKeys();
-            return set.getInt("id");
+
+            String getId = "SELECT id FROM chats WHERE last_insert_rowid() = ?";
+            PreparedStatement preparedStatement = conn.prepareStatement(getId);
+            preparedStatement.setInt(1, set.getInt("last_insert_rowid()"));
+            // TODO fix id = 1
+            int id = preparedStatement.executeQuery().getInt("id");
+            System.out.println("ID:" + id);
+            return id;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -145,7 +153,8 @@ public class SQLManager {
             PreparedStatement statement = conn.prepareStatement(sqlq);
             statement.setInt(1, user_id);
             statement.setInt(2, chat_id);
-            if (statement.executeQuery().next()) {
+            ResultSet set = statement.executeQuery();
+            if (set.next() && set.getInt("user_id") < 1) {
                 throw new NullPointerException();
             }
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -161,7 +170,7 @@ public class SQLManager {
     protected String newMessage(int sender_id, int chat_id, String msg_content) {
         String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
-        String getTime = "SELECT sent_at FROM messages WHERE id = ?";
+        String getTime = "SELECT sent_at FROM messages WHERE last_insert_rowid() = ?";
         try {
             // Check if the user is even in the chat
             PreparedStatement statement = conn.prepareStatement(sqlq);
@@ -172,15 +181,15 @@ public class SQLManager {
                 throw new NullPointerException();
             }
 
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+            PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setInt(1, sender_id);
             pstmt.setInt(2, chat_id);
             pstmt.setString(3, msg_content);
             pstmt.executeUpdate();
             System.out.println("Message successfully added.");
-
+            // TODO fix id = 1
             PreparedStatement preparedStatement = conn.prepareStatement(getTime);
-            preparedStatement.setInt(1, pstmt.getGeneratedKeys().getInt("id"));
+            preparedStatement.setInt(1, pstmt.getGeneratedKeys().getInt("last_insert_rowid()"));
             return preparedStatement.executeQuery().getString("sent_at");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -277,9 +286,9 @@ public class SQLManager {
             while (result.next()) {
                 temp.add(new MessageData(result.getInt("sender_id"), chat_id, result.getString("msg_content"), result.getString("sent_at")));
             }
-            if (temp.size() != 0) {
-                return temp;
-            }
+            // Reverse to send the newest at the bottom
+            Collections.reverse(temp);
+            return temp;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -296,11 +305,9 @@ public class SQLManager {
             ResultSet result = pstmt.executeQuery();
             ArrayList<ChatData> temp = new ArrayList<>(20);
             while (result.next()) {
-                temp.add(new ChatData(result.getString("chats.name"), result.getInt("contacts.chat_id")));
+                temp.add(new ChatData(result.getString("name"), result.getInt("chat_id")));
             }
-            if (temp.size() != 0) {
-                return temp;
-            }
+            return temp;
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -22,8 +22,10 @@ public enum PacketType {
     FETCH_CHATS(12),
     // Server side: add a new chat to the db | Client side: add chat information to the gui
     ADD_CHAT(13),
-    FETCH_USERNAME(14),
-    ADD_USER_TO_CHAT(15);
+    ADD_USER_TO_CHAT(14),
+    FETCH_MESSAGE(15),
+    FETCH_CHAT(16),
+    USER_ID(17);
 
     private final byte id;
 

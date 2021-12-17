@@ -47,11 +47,6 @@ public class GUITest extends Application implements IGUICallable {
     }
 
     @Override
-    public void onOpenPress() {
-
-    }
-
-    @Override
     public void onSelectChat(int chatId) {
 
     }
@@ -63,6 +58,11 @@ public class GUITest extends Application implements IGUICallable {
 
     @Override
     public void onAddChat(String chatName) {
+
+    }
+
+    @Override
+    public void onAddUserToChat(int chatId, int userId) {
 
     }
 }

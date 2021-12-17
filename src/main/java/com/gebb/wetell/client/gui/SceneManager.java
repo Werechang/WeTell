@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class SceneManager {
@@ -14,6 +15,8 @@ public class SceneManager {
     private final MessagePane messagePane;
     private final Scene scene;
     private final boolean hasResources;
+
+    private final HashMap<Integer, String> chats = new HashMap<>();
 
     public SceneManager(Stage stage, IGUICallable callable, boolean hasResources) {
         this.hasResources = hasResources;
@@ -69,10 +72,17 @@ public class SceneManager {
      * @param name
      */
     public void addChatInformation(String name, int id) {
-        messagePane.addChat(name);
+        Platform.runLater(() -> messagePane.addChat(name));
     }
 
-    public void addMessage(String messageContent, int sentByUserId) {
-        messagePane.addMessage(messageContent);
+    // TODO from isSentByThisUser to userid to get the name. This requires to get the user info of the users for each chat
+    public void addMessage(String messageContent, int chatId, boolean isSentByThisUser) {
+        Platform.runLater(() -> messagePane.addMessage(messageContent));
+    }
+
+    public void resetInputFields() {
+        Platform.runLater(loginPane::resetInput);
+        Platform.runLater(signInPane::resetInput);
+        Platform.runLater(messagePane::resetInputAndFields);
     }
 }

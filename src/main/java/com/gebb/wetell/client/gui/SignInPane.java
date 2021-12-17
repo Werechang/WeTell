@@ -10,6 +10,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 public class SignInPane extends GridPane {
+    private final TextField userTextField;
+    private final PasswordField passwordField;
 
     public SignInPane(IGUICallable callable, SceneManager manager) {
         super();
@@ -26,13 +28,13 @@ public class SignInPane extends GridPane {
         Label username = new Label("Username");
         this.add(username, 0, 1);
 
-        TextField userTextField = new TextField();
+        userTextField = new TextField();
         this.add(userTextField, 1, 1);
 
         Label password = new Label("Password");
         this.add(password, 0, 2);
 
-        PasswordField passwordField = new PasswordField();
+        passwordField = new PasswordField();
         this.add(passwordField, 1, 2);
 
         CheckBox savePassword = new CheckBox("Save Username and Password");
@@ -62,5 +64,10 @@ public class SignInPane extends GridPane {
         disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 11));
         disconnected.setVisible(false);
         this.add(disconnected, 0, 6, 2, 1);
+    }
+
+    protected void resetInput() {
+        userTextField.setText("");
+        passwordField.setText("");
     }
 }

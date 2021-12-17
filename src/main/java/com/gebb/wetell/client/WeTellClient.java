@@ -35,9 +35,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private boolean isCloseRequest;
     private boolean serverReceivedKey = false;
     private SceneManager sceneManager;
-    private boolean hasResources = true;
+    private final boolean hasResources = true;
     private int selectedChat = -1;
     private boolean isLoggedIn = false;
+    private int userId = -1;
 
     public static void main(String[] args) {
         launch(args);
@@ -95,7 +96,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     if (packet != null) {
                         execPacket(packet.getPacketData(serverReceivedKey ? keyPair.getPrivate() : null));
                     }
-                    Thread.sleep(2000);
+                    Thread.sleep(10);
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                     // Check if connection got closed
@@ -130,28 +131,28 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     public void onLogoutPress() {
         sendPacket(new PacketData(PacketType.LOGOUT));
         selectedChat = -1;
-    }
-
-    @Override
-    public void onOpenPress() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        sendPacket(new PacketData(PacketType.ADD_CHAT));
+        isLoggedIn = false;
+        userId = -1;
     }
 
     @Override
     public void onSelectChat(int chatId) {
-        selectedChat = chatId;
+        if (isLoggedInAndSecureConnection()) {
+            selectedChat = chatId;
+            ByteBuffer buffer = ByteBuffer.allocate(4);
+            buffer.putInt(chatId);
+            sendPacket(new PacketData(PacketType.FETCH_MSGS, buffer.array()));
+        }
     }
 
     @Override
     public void onSendMessage(String content) {
-        if (selectedChat != -1 && serverReceivedKey && isLoggedIn) {
-            MessageData messageData = new MessageData(-1, selectedChat, content, null);
+        if (isLoggedInAndSecureConnection() && selectedChat != -1) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
-                ObjectOutputStream msgOS = new ObjectOutputStream(bos);
-                msgOS.writeObject(messageData);
-                msgOS.flush();
+                ObjectOutputStream os = new ObjectOutputStream(bos);
+                os.writeObject(new MessageData(-1, selectedChat, content, null));
+                os.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -161,8 +162,35 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onAddChat(String chatName) {
-        if (serverReceivedKey && isLoggedIn) {
-            ChatData chatData = new ChatData(chatName, -1);
+        if (isLoggedInAndSecureConnection()) {
+            if (isLoggedInAndSecureConnection()) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                try {
+                    ObjectOutputStream os = new ObjectOutputStream(bos);
+                    os.writeObject(new ChatData(chatName, -1));
+                    os.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
+            }
+        }
+    }
+
+    @Override
+    public void onAddUserToChat(int chatId, int userId) {
+        if (isLoggedInAndSecureConnection()) {
+            if (isLoggedInAndSecureConnection()) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                try {
+                    ObjectOutputStream os = new ObjectOutputStream(bos);
+                    os.writeObject(new ContactData(chatId, userId));
+                    os.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sendPacket(new PacketData(PacketType.ADD_USER_TO_CHAT, bos.toByteArray()));
+            }
         }
     }
 
@@ -176,6 +204,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 sceneManager.setCurrentUserInformation(new String(data.getData(), StandardCharsets.UTF_8));
                 sceneManager.setScene(SceneType.MESSAGE);
                 isLoggedIn = true;
+                sendPacket(new PacketData(PacketType.FETCH_CHATS));
             }
             case KEY -> {
                 try {
@@ -191,7 +220,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             case KEYREQUEST -> sendKey();
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
-            case ADD_CHAT -> {
+            case FETCH_CHAT -> {
                 ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
                 try {
                     ObjectInputStream is = new ObjectInputStream(bis);
@@ -218,7 +247,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                         for (Object msg : messageData) {
                             if (msg instanceof MessageData) {
                                 MessageData m = (MessageData) msg;
-                                sceneManager.addMessage(m.getMsgContent(), m.getSentByUserId());
+                                sceneManager.addMessage(m.getMsgContent(), m.getChatId(), m.getSentByUserId() == userId);
                             }
                         }
                     }
@@ -246,8 +275,28 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     e.printStackTrace();
                 }
             }
-            case FETCH_USERNAME -> {
-                // TODO What to do with it?
+            case FETCH_MESSAGE -> {
+                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
+                try {
+                    ObjectInputStream is = new ObjectInputStream(bis);
+                    is.setObjectInputFilter(new DatapacketFilter());
+                    Object o = is.readObject();
+                    // Instanceof checks to stay safe
+                    if (o instanceof MessageData) {
+                        MessageData messageData = (MessageData) o;
+                        sceneManager.addMessage(messageData.getMsgContent(), messageData.getChatId(), messageData.getSentByUserId() == userId);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            case USER_ID -> userId = ByteBuffer.wrap(data.getData()).getInt();
+            case LOGOUT -> {
+                isLoggedIn = false;
+                userId = -1;
+                selectedChat = -1;
+                sceneManager.resetInputFields();
+                sceneManager.setScene(SceneType.LOGIN);
             }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
@@ -271,11 +320,13 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
         }
+        System.out.println("Sent packet: " + data.getType());
     }
 
     @Override
     public boolean isLoggedInAndSecureConnection() {
         if (!isLoggedIn) {
+            System.err.println("You are not logged in.");
             return false;
         }
         if (!serverReceivedKey) {
