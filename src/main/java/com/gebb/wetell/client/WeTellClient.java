@@ -30,7 +30,6 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private KeyPair keyPair;
     private PublicKey serverKey = null;
     private Thread listenThread;
-    private Socket socket;
     private boolean isWaitingForConnection;
     private boolean isCloseRequest;
     private boolean serverReceivedKey = false;

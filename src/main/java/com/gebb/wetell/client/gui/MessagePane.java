@@ -92,7 +92,7 @@ public class MessagePane extends GridPane {
         chatpbView.setFill(new ImagePattern(chatpb));
         Region region5 = new Region();
         region5.setPrefWidth(15);
-        Label chatname = new Label(name); //TODO here Name from Chat (SQL)
+        Label chatname = new Label(name);
         chatname.setAlignment(Pos.CENTER_LEFT);
         chatpbname.getChildren().addAll(chatpbView, region5, chatname);
 
@@ -100,7 +100,7 @@ public class MessagePane extends GridPane {
     }
 
     protected void addMessage(String message) {
-        Label messageLabel = new Label(message);   //TODO here Name from Chat (SQL)
+        Label messageLabel = new Label(message);
         messageLabel.setAlignment(Pos.CENTER_RIGHT); //TODO Change Alignment left or right due sender_Id (if = logged in user_id)
 
         messageslist.getItems().add(messageLabel);

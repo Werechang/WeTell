@@ -17,7 +17,7 @@ public class SQLManager {
             conn = DriverManager.getConnection(path);
             System.out.println("Connected to database successfully");
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -113,7 +113,6 @@ public class SQLManager {
                 pstmt.setString(2, hashedPassword);
                 pstmt.setString(3, salt);
                 pstmt.executeUpdate();
-                System.out.println("User successfully added.");
                 PreparedStatement getId = conn.prepareStatement(sqlq);
                 getId.setString(1, username);
                 ResultSet set = getId.executeQuery();
@@ -125,28 +124,23 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected int addChat(String name) {
+    protected synchronized int addChat(String name) {
         try {
             String sql = "INSERT INTO chats(name) VALUES(?)";
-            PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement statement = conn.prepareStatement(sql);
             statement.setString(1, name);
             statement.executeUpdate();
-            ResultSet set = statement.getGeneratedKeys();
 
-            String getId = "SELECT id FROM chats WHERE last_insert_rowid() = ?";
+            String getId = "SELECT id FROM chats ORDER BY id DESC LIMIT 1";
             PreparedStatement preparedStatement = conn.prepareStatement(getId);
-            preparedStatement.setInt(1, set.getInt("last_insert_rowid()"));
-            // TODO fix id = 1
-            int id = preparedStatement.executeQuery().getInt("id");
-            System.out.println("ID:" + id);
-            return id;
+            return preparedStatement.executeQuery().getInt("id");
         } catch (SQLException e) {
             e.printStackTrace();
         }
         throw new NullPointerException();
     }
 
-    protected void addContact(int user_id, int chat_id) {
+    protected synchronized void addContact(int user_id, int chat_id) {
         String sqlq = "SELECT * FROM contacts WHERE user_id = ? AND chat_id = ?";
         String sql = "INSERT INTO contacts(user_id,chat_id) VALUES(?,?)";
         try {
@@ -161,16 +155,15 @@ public class SQLManager {
             pstmt.setInt(1, user_id);
             pstmt.setInt(2, chat_id);
             pstmt.executeUpdate();
-            System.out.println("Contact successfully added.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    protected String newMessage(int sender_id, int chat_id, String msg_content) {
+    protected synchronized String newMessage(int sender_id, int chat_id, String msg_content) {
         String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
-        String getTime = "SELECT sent_at FROM messages WHERE last_insert_rowid() = ?";
+        String getTime = "SELECT sent_at FROM messages ORDER BY id DESC LIMIT 1";
         try {
             // Check if the user is even in the chat
             PreparedStatement statement = conn.prepareStatement(sqlq);
@@ -186,10 +179,7 @@ public class SQLManager {
             pstmt.setInt(2, chat_id);
             pstmt.setString(3, msg_content);
             pstmt.executeUpdate();
-            System.out.println("Message successfully added.");
-            // TODO fix id = 1
             PreparedStatement preparedStatement = conn.prepareStatement(getTime);
-            preparedStatement.setInt(1, pstmt.getGeneratedKeys().getInt("last_insert_rowid()"));
             return preparedStatement.executeQuery().getString("sent_at");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -227,7 +217,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected UserData getUserData(String username) {
+    protected synchronized UserData getUserData(String username) {
         String sql = "SELECT salt, hashedPassword FROM users WHERE name = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
