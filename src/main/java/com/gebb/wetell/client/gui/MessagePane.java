@@ -37,7 +37,13 @@ public class MessagePane extends GridPane {
         Logout.setAlignment(Pos.CENTER_RIGHT);
         Logout.setOnAction(event -> callable.onLogoutPress());
         Logout.setMinWidth(Region.USE_PREF_SIZE);
-        PbLogout.getChildren().addAll(userpbView, region1, Logout);
+        Region region2 = new Region();
+        region2.setPrefWidth(8);
+        Button NewChat = new Button("+");
+        NewChat.setAlignment(Pos.CENTER_RIGHT);
+        //NewChat.setOnAction(); TODO New Window/Stage
+        NewChat.setMinWidth(Region.USE_PREF_SIZE);
+        PbLogout.getChildren().addAll(userpbView, region1, Logout, region2, NewChat);
         this.add(PbLogout, 0, 0);
 
         //Current contact Name + PB Area (1,0)
@@ -47,33 +53,17 @@ public class MessagePane extends GridPane {
         Circle contactpbView = new Circle(250,250,25);
         Image contactpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         contactpbView.setFill(new ImagePattern(contactpb));
-        Region region2 = new Region();
-        region2.setPrefWidth(15);
+        Region region3 = new Region();
+        region3.setPrefWidth(15);
         Label Contactname = new Label("Name");
         Contactname.setAlignment(Pos.CENTER_LEFT);
         Contactname.setFont(Font.font(14));
-        contactpbname.getChildren().addAll(contactpbView, region2, Contactname);
+        contactpbname.getChildren().addAll(contactpbView, region3, Contactname);
         this.add(contactpbname, 1, 0);
 
-        // Open New Chat Area ()
-        HBox newChat = new HBox();
-        newChat.setAlignment(Pos.CENTER);
-        newChat.setPadding(new Insets(8, 8, 8, 8));
-        TextField username = new TextField();
-        username.setAlignment(Pos.CENTER_LEFT);
-        username.setPrefSize(200, 10);
-        Region region5 = new Region();
-        region5.setPrefWidth(8);
-        Button open = new Button("Öffnen");
-        open.setAlignment(Pos.CENTER_LEFT);
-        open.setOnAction(event -> callable.onAddChat(username.getText()));
-        open.setMinWidth(Region.USE_PREF_SIZE);
-        newChat.getChildren().addAll(username, region5, open);
-        this.add(newChat, 0, 1);
-
         //Chat & Message List Area (0,1/1,1)
-        this.add(chatlist, 0, 2); //TODO With Rowspan its looks weird
-        this.add(messageslist, 1, 1, 1, 2);
+        this.add(chatlist, 0, 1, 1, 2);
+        this.add(messageslist, 1, 1);
 
         //Send Message Area (1,2)
         HBox sendmessage = new HBox();
@@ -82,14 +72,14 @@ public class MessagePane extends GridPane {
         TextField messageField = new TextField();
         messageField.setAlignment(Pos.CENTER_LEFT);
         messageField.setPrefSize(400, 10);
-        Region region3 = new Region();
-        region3.setPrefWidth(8);
+        Region region4 = new Region();
+        region4.setPrefWidth(8);
         Button send = new Button("Send");
         send.setAlignment(Pos.CENTER_LEFT);
         send.setMinWidth(Region.USE_PREF_SIZE);
-        sendmessage.getChildren().addAll(messageField, region3, send);
+        sendmessage.getChildren().addAll(messageField, region4, send);
         send.setOnAction(event -> callable.onSendMessage(messageField.getText()));
-        this.add(sendmessage, 1, 3);
+        this.add(sendmessage, 1, 2);
     }
 
     protected void addChat(String name) {
@@ -100,11 +90,11 @@ public class MessagePane extends GridPane {
         Circle chatpbView = new Circle(250,250,25);
         Image chatpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         chatpbView.setFill(new ImagePattern(chatpb));
-        Region region4 = new Region();
-        region4.setPrefWidth(15);
+        Region region5 = new Region();
+        region5.setPrefWidth(15);
         Label chatname = new Label(name); //TODO here Name from Chat (SQL)
         chatname.setAlignment(Pos.CENTER_LEFT);
-        chatpbname.getChildren().addAll(chatpbView, region4, chatname);
+        chatpbname.getChildren().addAll(chatpbView, region5, chatname);
 
         chatlist.getItems().add(chatpbname);
     }
