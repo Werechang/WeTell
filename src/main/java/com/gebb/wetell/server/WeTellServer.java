@@ -16,6 +16,7 @@ public class WeTellServer extends ServerSocket {
     private final HashMap<Long, ServerThread> threads = new HashMap<>();
     private static WeTellServer server = null;
     private final SQLManager sqlManager = new SQLManager("jdbc:sqlite:wetell.db");
+    private Thread idleThread;
 
     private final Queue<ServerThread> closeThreadQueue = new ConcurrentLinkedQueue<>();
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -37,7 +38,7 @@ public class WeTellServer extends ServerSocket {
     private void idle() {
         running = true;
         System.out.println("Waiting for connection...");
-        Thread idleThread = new Thread(() -> {
+        idleThread = new Thread(() -> {
             while (running) {
                 try {
                     // Waiting to accept connection
@@ -76,6 +77,11 @@ public class WeTellServer extends ServerSocket {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        startScanLoop();
+        stop();
+    }
+
+    private void startScanLoop() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             String s = scanner.nextLine();
@@ -89,6 +95,9 @@ public class WeTellServer extends ServerSocket {
                 System.out.println("Number of ServerThreads active: " + threads.size());
             }
         }
+    }
+
+    private void stop() {
         try {
             sqlManager.close();
             //Socket s = new Socket();

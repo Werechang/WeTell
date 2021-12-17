@@ -219,76 +219,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             case KEYREQUEST -> sendKey();
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
-            case FETCH_CHAT -> {
-                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
-                try {
-                    ObjectInputStream is = new ObjectInputStream(bis);
-                    is.setObjectInputFilter(new DatapacketFilter());
-                    Object o = is.readObject();
-                    // Instanceof checks to stay safe
-                    if (o instanceof ChatData) {
-                        ChatData chatData = (ChatData) o;
-                        sceneManager.addChatInformation(chatData.getName(), chatData.getId());
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-            case FETCH_MSGS -> {
-                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
-                try {
-                    ObjectInputStream is = new ObjectInputStream(bis);
-                    is.setObjectInputFilter(new DatapacketFilter());
-                    Object o = is.readObject();
-                    // Instanceof checks to stay safe
-                    if (o instanceof ArrayList) {
-                        ArrayList<?> messageData = (ArrayList<?>) o;
-                        for (Object msg : messageData) {
-                            if (msg instanceof MessageData) {
-                                MessageData m = (MessageData) msg;
-                                sceneManager.addMessage(m.getMsgContent(), m.getChatId(), m.getSentByUserId() == userId);
-                            }
-                        }
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-            case FETCH_CHATS -> {
-                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
-                try {
-                    ObjectInputStream is = new ObjectInputStream(bis);
-                    is.setObjectInputFilter(new DatapacketFilter());
-                    Object o = is.readObject();
-                    // Instanceof checks to stay safe
-                    if (o instanceof ArrayList) {
-                        ArrayList<?> chatData = (ArrayList<?>) o;
-                        for (Object chat : chatData) {
-                            if (chat instanceof ChatData) {
-                                ChatData c = (ChatData) chat;
-                                sceneManager.addChatInformation(c.getName(), c.getId());
-                            }
-                        }
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-            case FETCH_MESSAGE -> {
-                ByteArrayInputStream bis = new ByteArrayInputStream(data.getData());
-                try {
-                    ObjectInputStream is = new ObjectInputStream(bis);
-                    is.setObjectInputFilter(new DatapacketFilter());
-                    Object o = is.readObject();
-                    // Instanceof checks to stay safe
-                    if (o instanceof MessageData) {
-                        MessageData messageData = (MessageData) o;
-                        sceneManager.addMessage(messageData.getMsgContent(), messageData.getChatId(), messageData.getSentByUserId() == userId);
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
+            case FETCH_CHATS -> extractChatDataArray(data.getData());
+            case FETCH_CHAT -> extractChatData(data.getData());
+            case FETCH_MSGS -> extractMessageDataArray(data.getData());
+            case FETCH_MESSAGE -> extractMessageData(data.getData());
             case USER_ID -> userId = ByteBuffer.wrap(data.getData()).getInt();
             case LOGOUT -> {
                 isLoggedIn = false;
@@ -348,6 +282,87 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         }
     }
 
+    private void extractChatData(byte[] data) {
+        if (isLoggedInAndSecureConnection()) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            try {
+                ObjectInputStream is = new ObjectInputStream(bis);
+                is.setObjectInputFilter(new DatapacketFilter());
+                Object o = is.readObject();
+                // Instanceof checks to stay safe
+                if (o instanceof ChatData) {
+                    ChatData chatData = (ChatData) o;
+                    sceneManager.addChatInformation(chatData.getName(), chatData.getId());
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void extractChatDataArray(byte[] data) {
+        if (isLoggedInAndSecureConnection()) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            try {
+                ObjectInputStream is = new ObjectInputStream(bis);
+                is.setObjectInputFilter(new DatapacketFilter());
+                Object o = is.readObject();
+                // Instanceof checks to stay safe
+                if (o instanceof ArrayList) {
+                    ArrayList<?> chatData = (ArrayList<?>) o;
+                    for (Object chat : chatData) {
+                        if (chat instanceof ChatData) {
+                            ChatData c = (ChatData) chat;
+                            sceneManager.addChatInformation(c.getName(), c.getId());
+                        }
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void extractMessageDataArray(byte[] data) {
+        if (isLoggedInAndSecureConnection()) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            try {
+                ObjectInputStream is = new ObjectInputStream(bis);
+                is.setObjectInputFilter(new DatapacketFilter());
+                Object o = is.readObject();
+                // Instanceof checks to stay safe
+                if (o instanceof ArrayList) {
+                    ArrayList<?> messageData = (ArrayList<?>) o;
+                    for (Object msg : messageData) {
+                        if (msg instanceof MessageData) {
+                            MessageData m = (MessageData) msg;
+                            sceneManager.addMessage(m.getMsgContent(), m.getChatId(), m.getSentByUserId() == userId);
+                        }
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void extractMessageData(byte[] data) {
+         if (isLoggedInAndSecureConnection()) {
+             ByteArrayInputStream bis = new ByteArrayInputStream(data);
+             try {
+                 ObjectInputStream is = new ObjectInputStream(bis);
+                 is.setObjectInputFilter(new DatapacketFilter());
+                 Object o = is.readObject();
+                 // Instanceof checks to stay safe
+                 if (o instanceof MessageData) {
+                     MessageData messageData = (MessageData) o;
+                     sceneManager.addMessage(messageData.getMsgContent(), messageData.getChatId(), messageData.getSentByUserId() == userId);
+                 }
+             } catch (IOException | ClassNotFoundException e) {
+                 e.printStackTrace();
+             }
+         }
+    }
 
     public void prepareClose() {
         isCloseRequest = true;

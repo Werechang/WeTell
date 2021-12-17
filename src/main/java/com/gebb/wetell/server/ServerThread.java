@@ -108,43 +108,8 @@ public class ServerThread extends Thread implements IConnectable {
                 userId = -1;
                 sendPacket(new PacketData(PacketType.LOGOUT));
             }
-            case FETCH_CHATS -> {
-                if (isLoggedInAndSecureConnection()) {
-                    try {
-                        ArrayList<ChatData> chatData = WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId);
-                        if (chatData.size() != 0) {
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            try {
-                                ObjectOutputStream chatOS = new ObjectOutputStream(bos);
-                                chatOS.writeObject(chatData);
-                                chatOS.flush();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
-                        }
-                    } catch (NullPointerException e) {
-                        sendPacket(new PacketData(PacketType.ERROR, "An error occurred while reading the chat data.".getBytes(StandardCharsets.UTF_8)));
-                    }
-                }
-            }
-            case FETCH_MSGS -> {
-                if (isLoggedInAndSecureConnection()) {
-                    ByteBuffer chatIdWrapped = ByteBuffer.wrap(data.getData());
-                    ArrayList<MessageData> messageData = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
-                    if (messageData.size() != 0) {
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        try {
-                            ObjectOutputStream msgOS = new ObjectOutputStream(bos);
-                            msgOS.writeObject(messageData);
-                            msgOS.flush();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
-                    }
-                }
-            }
+            case FETCH_CHATS -> fetchChats();
+            case FETCH_MSGS -> fetchMessages(data.getData());
             case ADD_CHAT -> addChat(data.getData());
             case ADD_USER_TO_CHAT -> addUserToChat(data.getData());
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
@@ -356,6 +321,45 @@ public class ServerThread extends Thread implements IConnectable {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void fetchChats() {
+        if (isLoggedInAndSecureConnection()) {
+            try {
+                ArrayList<ChatData> chatData = WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId);
+                if (chatData.size() != 0) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    try {
+                        ObjectOutputStream chatOS = new ObjectOutputStream(bos);
+                        chatOS.writeObject(chatData);
+                        chatOS.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
+                }
+            } catch (NullPointerException e) {
+                sendPacket(new PacketData(PacketType.ERROR, "An error occurred while reading the chat data.".getBytes(StandardCharsets.UTF_8)));
+            }
+        }
+    }
+
+    private void fetchMessages(byte[] data) {
+        if (isLoggedInAndSecureConnection()) {
+            ByteBuffer chatIdWrapped = ByteBuffer.wrap(data);
+            ArrayList<MessageData> messageData = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
+            if (messageData.size() != 0) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                try {
+                    ObjectOutputStream msgOS = new ObjectOutputStream(bos);
+                    msgOS.writeObject(messageData);
+                    msgOS.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
             }
         }
     }
