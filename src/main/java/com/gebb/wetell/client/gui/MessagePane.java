@@ -8,10 +8,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
+
 import java.util.Objects;
 
 public class MessagePane extends GridPane {
@@ -39,11 +43,10 @@ public class MessagePane extends GridPane {
         Logout.setMinWidth(Region.USE_PREF_SIZE);
         Region region2 = new Region();
         region2.setPrefWidth(8);
-        Button NewChat = new Button("+");
-        NewChat.setAlignment(Pos.CENTER_RIGHT);
-        //NewChat.setOnAction(); TODO New Window/Stage
-        NewChat.setMinWidth(Region.USE_PREF_SIZE);
-        PbLogout.getChildren().addAll(userpbView, region1, Logout, region2, NewChat);
+        Button newChatButton = new Button("+");
+        newChatButton.setAlignment(Pos.CENTER_RIGHT);
+        newChatButton.setMinWidth(Region.USE_PREF_SIZE);
+        PbLogout.getChildren().addAll(userpbView, region1, Logout, region2, newChatButton);
         this.add(PbLogout, 0, 0);
 
         //Current contact Name + PB Area (1,0)
@@ -80,6 +83,9 @@ public class MessagePane extends GridPane {
         sendmessage.getChildren().addAll(messageField, region4, send);
         send.setOnAction(event -> callable.onSendMessage(messageField.getText()));
         this.add(sendmessage, 1, 2);
+
+        chatlist.setStyle("-fx-background-color: #2f3c4c;");
+        messageslist.setStyle("-fx-background-color: #292c2f;");
     }
 
     protected void addChat(String name) {
@@ -99,14 +105,23 @@ public class MessagePane extends GridPane {
         chatlist.getItems().add(chatpbname);
     }
 
-    protected void addMessage(String message) {
+    protected void addMessage(String message, boolean isSentByThisUser) {
         Label messageLabel = new Label(message);
-        messageLabel.setAlignment(Pos.CENTER_RIGHT); //TODO Change Alignment left or right due sender_Id (if = logged in user_id)
+        messageLabel.setAlignment(isSentByThisUser ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
 
         messageslist.getItems().add(messageLabel);
     }
 
-    protected void resetInputAndFields() {
+    protected void removeAllChats() {
+        chatlist.getItems().remove(0, chatlist.getItems().size()-1);
+    }
 
+    protected void removeAllMessages() {
+        messageslist.getItems().remove(0, messageslist.getItems().size()-1);
+    }
+
+    protected void resetInputAndFields() {
+        removeAllChats();
+        removeAllMessages();
     }
 }

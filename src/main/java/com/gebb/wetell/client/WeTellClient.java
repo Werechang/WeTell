@@ -60,7 +60,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private void connect() {
         try {
             Socket socket = new Socket();
-            socket.connect(new InetSocketAddress("localhost", 80));
+            socket.connect(new InetSocketAddress("91.65.18.151", 8060));
             oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             oos.flush();
             ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -336,7 +336,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     for (Object msg : messageData) {
                         if (msg instanceof MessageData) {
                             MessageData m = (MessageData) msg;
-                            sceneManager.addMessage(m.getMsgContent(), m.getChatId(), m.getSentByUserId() == userId);
+                            if (selectedChat == m.getChatId()) {
+                                sceneManager.addMessage(m.getMsgContent(), m.getSentByUserId() == userId);
+                            }
                         }
                     }
                 }
@@ -356,7 +358,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                  // Instanceof checks to stay safe
                  if (o instanceof MessageData) {
                      MessageData messageData = (MessageData) o;
-                     sceneManager.addMessage(messageData.getMsgContent(), messageData.getChatId(), messageData.getSentByUserId() == userId);
+                     if (selectedChat == messageData.getChatId()) {
+                        sceneManager.addMessage(messageData.getMsgContent(), messageData.getSentByUserId() == userId);
+                     }
                  }
              } catch (IOException | ClassNotFoundException e) {
                  e.printStackTrace();

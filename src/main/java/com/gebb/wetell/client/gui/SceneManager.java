@@ -76,8 +76,8 @@ public class SceneManager {
     }
 
     // TODO from isSentByThisUser to userid to get the name. This requires to get the user info of the users for each chat
-    public void addMessage(String messageContent, int chatId, boolean isSentByThisUser) {
-        Platform.runLater(() -> messagePane.addMessage(messageContent));
+    public void addMessage(String messageContent, boolean isSentByThisUser) {
+        Platform.runLater(() -> messagePane.addMessage(messageContent, isSentByThisUser));
     }
 
     public void resetInputFields() {
