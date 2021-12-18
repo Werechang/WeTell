@@ -64,6 +64,11 @@ public class SceneManager {
         }
     }
 
+    public void setDisconnected(boolean value) {
+        Platform.runLater(() -> signInPane.setDisconnectedLabel(value));
+        Platform.runLater(() -> loginPane.setDisconnectedLabel(value));
+    }
+
     public void setCurrentUserInformation(String username) {
     }
 

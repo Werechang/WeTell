@@ -12,6 +12,7 @@ import javafx.scene.text.FontWeight;
 public class SignInPane extends GridPane {
     private final TextField userTextField;
     private final PasswordField passwordField;
+    private final Label disconnected = new Label("The Server is currently unavailable.");
 
     public SignInPane(IGUICallable callable, SceneManager manager) {
         super();
@@ -60,10 +61,13 @@ public class SignInPane extends GridPane {
         this.add(buttonBox, 1, 4);
         signInButton.setOnAction( event -> callable.onSignInPress(userTextField.getText(), passwordField.getText()));
 
-        Label disconnected = new Label("The Client is currently not connected to the Server");
         disconnected.setFont(Font.font("SegoeUI", FontWeight.NORMAL, 11));
         disconnected.setVisible(false);
         this.add(disconnected, 0, 6, 2, 1);
+    }
+
+    protected void setDisconnectedLabel(boolean isVisible) {
+        disconnected.setVisible(isVisible);
     }
 
     protected void resetInput() {

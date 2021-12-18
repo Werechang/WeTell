@@ -47,6 +47,10 @@ public class ServerThread extends Thread implements IConnectable {
     public void run() {
         startListenThread();
         sendKey();
+        close();
+    }
+
+    private void close() {
         try {
             listenThread.join();
             oos.flush();
@@ -112,6 +116,7 @@ public class ServerThread extends Thread implements IConnectable {
             case FETCH_MSGS -> fetchMessages(data.getData());
             case ADD_CHAT -> addChat(data.getData());
             case ADD_USER_TO_CHAT -> addUserToChat(data.getData());
+            case CLOSE_CONNECTION -> close();
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }

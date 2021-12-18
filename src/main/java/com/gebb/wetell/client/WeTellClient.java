@@ -47,7 +47,6 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     public void start(Stage stage) {
         // Init keys
         keyPair = KeyPairManager.generateRSAKeyPair();
-        connect();
         // Window preparations
         stage.setTitle("WeTell");
         if (hasResources) {
@@ -55,36 +54,42 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         }
 
         sceneManager = new SceneManager(stage, this, hasResources);
+        connect();
     }
 
     private void connect() {
-        try {
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress("91.65.18.151", 8060));
-            oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-            oos.flush();
-            ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-            ois.setObjectInputFilter(new DatapacketFilter());
-            isWaitingForConnection = false;
-            sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
-            listen();
-        } catch (IOException | NoSuchAlgorithmException e) {
-            // if thread is not already running
-            if (!isWaitingForConnection) {
-                isWaitingForConnection = true;
-                new Thread(() -> {
-                    while (isWaitingForConnection && !isCloseRequest) {
-                        try {
-                            Thread.sleep(10000);
-                            connect();
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
+        new Thread(() -> {
+            try {
+                Socket socket = new Socket();
+                sceneManager.setDisconnected(true);
+                socket.connect(new InetSocketAddress("localhost", 24464));
+                oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                oos.flush();
+                ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+                ois.setObjectInputFilter(new DatapacketFilter());
+                isWaitingForConnection = false;
+                sceneManager.setDisconnected(false);
+                sendPacket(new PacketData(PacketType.KEY, KeyPairManager.RSAPublicKeyToByteStream(keyPair.getPublic())), false);
+                listen();
+            } catch (IOException | NoSuchAlgorithmException e) {
+                // if thread is not already running
+                if (!isWaitingForConnection) {
+                    isWaitingForConnection = true;
+                    sceneManager.setDisconnected(true);
+                    new Thread(() -> {
+                        while (isWaitingForConnection && !isCloseRequest) {
+                            try {
+                                Thread.sleep(10000);
+                                connect();
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
                         }
-                    }
-                }).start();
+                    }).start();
+                }
+                e.printStackTrace();
             }
-            e.printStackTrace();
-        }
+        }).start();
     }
 
     private void listen() {
