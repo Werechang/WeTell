@@ -26,7 +26,6 @@ public class MessagePane extends GridPane {
     public MessagePane(IGUICallable callable) {
         super();
         this.setAlignment(Pos.CENTER);
-        this.setGridLinesVisible(true);
 
         //PB + Logout Area (0,0)
         HBox PbLogout = new HBox();
@@ -67,6 +66,10 @@ public class MessagePane extends GridPane {
         //Chat & Message List Area (0,1/1,1)
         this.add(chatlist, 0, 1, 1, 2);
         this.add(messageslist, 1, 1);
+        chatlist.setPrefWidth(300);
+        chatlist.setPrefHeight(590);
+        messageslist.setPrefWidth(700);
+        messageslist.setPrefHeight(540);
 
         //Send Message Area (1,2)
         HBox sendmessage = new HBox();
@@ -74,7 +77,7 @@ public class MessagePane extends GridPane {
         sendmessage.setPadding(new Insets(8, 8, 8, 8));
         TextField messageField = new TextField();
         messageField.setAlignment(Pos.CENTER_LEFT);
-        messageField.setPrefSize(400, 10);
+        messageField.setPrefSize(600, 10);
         Region region4 = new Region();
         region4.setPrefWidth(8);
         Button send = new Button("Send");
@@ -86,6 +89,9 @@ public class MessagePane extends GridPane {
 
         chatlist.setStyle("-fx-background-color: #2f3c4c;");
         messageslist.setStyle("-fx-background-color: #292c2f;");
+        sendmessage.setStyle("-fx-background-color: #292c2f;");
+        PbLogout.setStyle("-fx-background-color: #292c2f;");
+        //contactpbname.setStyle("-fx-background-color: #2d3033;");
     }
 
     protected void addChat(String name) {
