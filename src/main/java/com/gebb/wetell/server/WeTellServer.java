@@ -23,7 +23,7 @@ public class WeTellServer extends ServerSocket {
 
     public static void main(String[] args) {
         try {
-            server = new WeTellServer(24464);
+            server = new WeTellServer(80);
         } catch (IOException e) {
             e.printStackTrace();
         }
