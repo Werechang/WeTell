@@ -12,4 +12,5 @@ public interface IGUICallable {
     void onSendMessage(String content);
     void onAddChat(String chatName);
     void onAddUserToChat(int chatId, int userId);
+    void backtoMessagePane();
 }

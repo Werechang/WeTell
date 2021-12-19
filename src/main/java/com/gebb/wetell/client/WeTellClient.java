@@ -199,6 +199,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     @Override
+    public void backtoMessagePane() {
+
+    }
+
+    @Override
     public void execPacket(PacketData data) {
         if (data == null) {
             return;

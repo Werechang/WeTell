@@ -65,4 +65,9 @@ public class GUITest extends Application implements IGUICallable {
     public void onAddUserToChat(int chatId, int userId) {
 
     }
+
+    @Override
+    public void backtoMessagePane() {
+
+    }
 }

@@ -8,10 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
@@ -22,6 +19,7 @@ public class MessagePane extends GridPane {
 
     private final ListView<HBox> chatlist = new ListView<>();
     private final ListView<Label> messageslist = new ListView<>();
+    private final GridPane newChatPane = new GridPane();
 
     public MessagePane(IGUICallable callable) {
         super();
@@ -43,6 +41,7 @@ public class MessagePane extends GridPane {
         Region region2 = new Region();
         region2.setPrefWidth(8);
         Button newChatButton = new Button("+");
+        newChatButton.setOnAction(event -> openNewChatPane());
         newChatButton.setAlignment(Pos.CENTER_RIGHT);
         newChatButton.setMinWidth(Region.USE_PREF_SIZE);
         PbLogout.getChildren().addAll(userpbView, region1, Logout, region2, newChatButton);
@@ -87,11 +86,30 @@ public class MessagePane extends GridPane {
         send.setOnAction(event -> callable.onSendMessage(messageField.getText()));
         this.add(sendmessage, 1, 2);
 
+        //NewChatPane
+        newChatPane.setAlignment(Pos.CENTER);
+        HBox addcontact = new HBox();
+        TextField findcontact = new TextField();
+        Region region5 = new Region();
+        region5.setPrefWidth(8);
+        Button entercontact = new Button("Add");
+        addcontact.getChildren().addAll(findcontact, region5, entercontact);
+        Label added = new Label();
+        HBox closecreate = new HBox();
+        Button close = new Button("X");
+        Region region6 = new Region();
+        region6.setPrefWidth(8);
+        Button createnewchat = new Button("Create");
+        closecreate.getChildren().addAll(close, region6, createnewchat);
+        close.setOnAction(event -> callable.backtoMessagePane());
+        newChatPane.add(addcontact, 0, 0);
+        newChatPane.add(added, 0, 1);
+        newChatPane.add(closecreate, 0, 2);
+
         chatlist.setStyle("-fx-background-color: #2f3c4c;");
         messageslist.setStyle("-fx-background-color: #292c2f;");
         sendmessage.setStyle("-fx-background-color: #292c2f;");
         PbLogout.setStyle("-fx-background-color: #292c2f;");
-        //contactpbname.setStyle("-fx-background-color: #2d3033;");
     }
 
     protected void addChat(String name) {
@@ -102,11 +120,11 @@ public class MessagePane extends GridPane {
         Circle chatpbView = new Circle(250,250,25);
         Image chatpb = new Image(Objects.requireNonNull(MessagePane.class.getResource("icons/wetell.png")).toExternalForm());
         chatpbView.setFill(new ImagePattern(chatpb));
-        Region region5 = new Region();
-        region5.setPrefWidth(15);
+        Region region7 = new Region();
+        region7.setPrefWidth(15);
         Label chatname = new Label(name);
         chatname.setAlignment(Pos.CENTER_LEFT);
-        chatpbname.getChildren().addAll(chatpbView, region5, chatname);
+        chatpbname.getChildren().addAll(chatpbView, region7, chatname);
 
         chatlist.getItems().add(chatpbname);
     }
@@ -129,5 +147,13 @@ public class MessagePane extends GridPane {
     protected void resetInputAndFields() {
         removeAllChats();
         removeAllMessages();
+    }
+
+    protected void openNewChatPane(){
+        //this.setMouseTransparent(true);
+        newChatPane.setVisible(true);
+        //TODO add to scene
+        this.add(newChatPane, 0, 0, 3, 2);
+
     }
 }
