@@ -22,6 +22,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 public class WeTellClient extends Application implements IConnectable, IGUICallable {
 
@@ -38,6 +39,8 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private int selectedChat = -1;
     private boolean isLoggedIn = false;
     private int userId = -1;
+    private final CountDownLatch getUserIdWaiter = new CountDownLatch(1);
+    private int requestedUserId = -1;
 
     public static void main(String[] args) {
         launch(args);
@@ -182,25 +185,28 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     @Override
-    public void onAddUserToChat(int chatId, int userId) {
-        if (isLoggedInAndSecureConnection()) {
-            if (isLoggedInAndSecureConnection()) {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    public void onAddUserToChat(int chatId, String username) {
+        if (isLoggedInAndSecureConnection() && chatId != -1 && username.length() >= 4) {
+            sendPacket(new PacketData(PacketType.USER_ID, username.getBytes(StandardCharsets.UTF_8)));
+            new Thread(() -> {
                 try {
-                    ObjectOutputStream os = new ObjectOutputStream(bos);
-                    os.writeObject(new ContactData(chatId, userId));
-                    os.flush();
-                } catch (IOException e) {
+                    getUserIdWaiter.await();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                sendPacket(new PacketData(PacketType.ADD_USER_TO_CHAT, bos.toByteArray()));
-            }
+                if (requestedUserId != -1) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    try {
+                        ObjectOutputStream os = new ObjectOutputStream(bos);
+                        os.writeObject(new ContactData(chatId, requestedUserId));
+                        os.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sendPacket(new PacketData(PacketType.ADD_USER_TO_CHAT, bos.toByteArray()));
+                } // Else: user does not exist
+            }).start();
         }
-    }
-
-    @Override
-    public void backtoMessagePane() {
-
     }
 
     @Override
@@ -241,6 +247,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 sceneManager.resetInputFields();
                 sceneManager.setScene(SceneType.LOGIN);
             }
+            case USERID_FROM_NAME -> {
+                requestedUserId = ByteBuffer.wrap(data.getData()).getInt();
+                getUserIdWaiter.countDown();
+            }
+            case ADD_CHAT_SUCCESS -> sceneManager.setCurrentAddChatId(ByteBuffer.wrap(data.getData()).getInt());
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }

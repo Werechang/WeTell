@@ -117,6 +117,17 @@ public class ServerThread extends Thread implements IConnectable {
             case ADD_CHAT -> addChat(data.getData());
             case ADD_USER_TO_CHAT -> addUserToChat(data.getData());
             case CLOSE_CONNECTION -> close();
+            case USER_ID -> {
+                if (isLoggedInAndSecureConnection()) {
+                    int uid = -1;
+                    try {
+                        uid = WeTellServer.getInstance().getSQLManager().getUserId(new String(data.getData(), StandardCharsets.UTF_8));
+                    } catch (NullPointerException ignored) {}
+                    ByteBuffer buffer = ByteBuffer.allocate(4);
+                    buffer.putInt(uid);
+                    sendPacket(new PacketData(PacketType.USERID_FROM_NAME, buffer.array()));
+                }
+            }
             default -> System.err.println("PacketType " + data.getType() + " is either corrupted or currently not supported. Data: " + new String(data.getData(), StandardCharsets.UTF_8));
         }
     }
@@ -254,6 +265,9 @@ public class ServerThread extends Thread implements IConnectable {
                         }
                         addUserToChat(new ContactData(chatId, userId));
                         fetchChatData(chatId, chatData.getName());
+                        ByteBuffer buffer = ByteBuffer.allocate(4);
+                        buffer.putInt(chatId);
+                        sendPacket(new PacketData(PacketType.ADD_CHAT_SUCCESS, buffer.array()));
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {

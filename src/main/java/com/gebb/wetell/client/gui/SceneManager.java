@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -15,8 +16,6 @@ public class SceneManager {
     private final MessagePane messagePane;
     private final Scene scene;
     private final boolean hasResources;
-
-    private final HashMap<Integer, String> chats = new HashMap<>();
 
     public SceneManager(Stage stage, IGUICallable callable, boolean hasResources) {
         this.hasResources = hasResources;
@@ -29,7 +28,7 @@ public class SceneManager {
 
         this.loginPane = new LoginPane(callable, this);
         this.signInPane = new SignInPane(callable, this);
-        this.messagePane = new MessagePane(callable);
+        this.messagePane = new MessagePane(callable, stage);
 
         // Login is the first scene
         this.scene = new Scene(this.loginPane);
@@ -77,7 +76,7 @@ public class SceneManager {
      * @param name
      */
     public void addChatInformation(String name, int id) {
-        Platform.runLater(() -> messagePane.addChat(name));
+        Platform.runLater(() -> messagePane.addChat(name, id));
     }
 
     public void addMessage(String messageContent, boolean isSentByThisUser) {
@@ -88,5 +87,9 @@ public class SceneManager {
         Platform.runLater(loginPane::resetInput);
         Platform.runLater(signInPane::resetInput);
         Platform.runLater(messagePane::resetInputAndFields);
+    }
+
+    public void setCurrentAddChatId(int id) {
+        messagePane.setNewChatId(id);
     }
 }

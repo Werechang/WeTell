@@ -174,7 +174,7 @@ public class SQLManager {
                 throw new NullPointerException();
             }
 
-            PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, sender_id);
             pstmt.setInt(2, chat_id);
             pstmt.setString(3, msg_content);
