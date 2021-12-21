@@ -4,6 +4,7 @@ import com.gebb.wetell.dataclasses.PacketData;
 import com.gebb.wetell.connection.PacketType;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -23,7 +24,7 @@ public class WeTellServer extends ServerSocket {
 
     public static void main(String[] args) {
         try {
-            server = new WeTellServer(80);
+            server = new WeTellServer(24464);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,11 +44,13 @@ public class WeTellServer extends ServerSocket {
                 try {
                     // Waiting to accept connection
                     Socket socket = this.accept();
-                    ServerThread t = new ServerThread(socket);
-                    threads.put(t.getId(), t);
-                    System.out.println("Accepted connection");
-                    // get last element and start it
-                    t.start();
+                    if (running) {
+                        ServerThread t = new ServerThread(socket);
+                        threads.put(t.getId(), t);
+                        System.out.println("Accepted connection");
+                        // get last element and start it
+                        t.start();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -83,7 +86,7 @@ public class WeTellServer extends ServerSocket {
 
     private void startScanLoop() {
         Scanner scanner = new Scanner(System.in);
-        while (true) {
+        while (running) {
             String s = scanner.nextLine();
             if (Objects.equals(s, "q") || Objects.equals(s, "Q")) {
                 running = false;
@@ -100,14 +103,18 @@ public class WeTellServer extends ServerSocket {
     private void stop() {
         try {
             sqlManager.close();
-            //Socket s = new Socket();
-            //s.connect(new InetSocketAddress("localhost", this.getLocalPort()));
+            // Unblock wait for connection, kill that thread
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress("localhost", this.getLocalPort()), 2000);
             idleThread.join();
+            // Kill every server thread
             for (Map.Entry<Long, ServerThread> set: threads.entrySet()) {
                 set.getValue().sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
                 set.getValue().join();
             }
-        } catch (InterruptedException e) {
+            // Kill the thread that waits for latch to count down and that kills the serverthreads in the stopqueue
+            latch.countDown();
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }

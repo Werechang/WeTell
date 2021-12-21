@@ -91,7 +91,10 @@ public class MessagePane extends GridPane {
         send.setAlignment(Pos.CENTER_LEFT);
         send.setMinWidth(Region.USE_PREF_SIZE);
         sendmessage.getChildren().addAll(messageField, region4, send);
-        send.setOnAction(event -> callable.onSendMessage(messageField.getText()));
+        send.setOnAction(event -> {
+            callable.onSendMessage(messageField.getText());
+            messageField.setText("");
+        });
         this.add(sendmessage, 1, 2);
 
         //NewChatPane

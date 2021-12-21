@@ -121,7 +121,10 @@ public class ServerThread extends Thread implements IConnectable {
             case FETCH_MSGS -> fetchMessages(data.getData());
             case ADD_CHAT -> addChat(data.getData());
             case ADD_USER_TO_CHAT -> addUserToChat(data.getData());
-            case CLOSE_CONNECTION -> close();
+            case CLOSE_CONNECTION -> {
+                userId = -1;
+                close();
+            }
             case USER_ID -> {
                 if (isLoggedInAndSecureConnection()) {
                     int uid = -1;
@@ -316,6 +319,7 @@ public class ServerThread extends Thread implements IConnectable {
                         String time = WeTellServer.getInstance().getSQLManager().newMessage(userId, messageData.getChatId(), messageData.getMsgContent());
                         sendMessageToChat(new MessageData(userId, messageData.getChatId(), messageData.getMsgContent(), time));
                     } catch (NullPointerException e) {
+                        e.printStackTrace();
                         sendPacket(new PacketData(PacketType.ERROR, "User is not in the chat.".getBytes(StandardCharsets.UTF_8)));
                     }
                 }
@@ -351,7 +355,7 @@ public class ServerThread extends Thread implements IConnectable {
             ArrayList<Integer> userIds = WeTellServer.getInstance().getSQLManager().getUsersInChat(messageData.getChatId());
             for (ServerThread thread : WeTellServer.getInstance().getThreads()) {
                 if (userIds.contains(thread.userId)) {
-                    sendPacket(new PacketData(PacketType.FETCH_MESSAGE, Util.serializeObject(messageData)));
+                    thread.sendPacket(new PacketData(PacketType.FETCH_MESSAGE, Util.serializeObject(messageData)));
                 }
             }
         } catch (NullPointerException e) {
