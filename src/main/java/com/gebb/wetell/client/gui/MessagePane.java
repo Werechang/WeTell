@@ -1,6 +1,8 @@
 package com.gebb.wetell.client.gui;
 
 import com.gebb.wetell.client.IGUICallable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -17,6 +19,7 @@ import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class MessagePane extends GridPane {
@@ -122,7 +125,13 @@ public class MessagePane extends GridPane {
             findcontact.setText("");
             newChatId = -1;
         });
-
+        chatlist.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            for (Map.Entry<Integer, HBox> entry: chats.entrySet()) {
+                if (Objects.equals(entry.getValue(), newValue)) {
+                    callable.onSelectChat(entry.getKey());
+                }
+            }
+        });
 
         chatlist.setStyle("-fx-background-color: #2f3c4c;");
         messageslist.setStyle("-fx-background-color: #292c2f;");
