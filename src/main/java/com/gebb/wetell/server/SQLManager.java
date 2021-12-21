@@ -1,7 +1,7 @@
 package com.gebb.wetell.server;
 
-import com.gebb.wetell.ChatData;
-import com.gebb.wetell.MessageData;
+import com.gebb.wetell.dataclasses.ChatData;
+import com.gebb.wetell.dataclasses.MessageData;
 
 import java.sql.*;
 import java.util.ArrayList;

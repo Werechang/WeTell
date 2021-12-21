@@ -1,6 +1,11 @@
 package com.gebb.wetell.server;
 
 import com.gebb.wetell.*;
+import com.gebb.wetell.connection.Datapacket;
+import com.gebb.wetell.connection.DatapacketFilter;
+import com.gebb.wetell.connection.InvalidSignatureException;
+import com.gebb.wetell.connection.PacketType;
+import com.gebb.wetell.dataclasses.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.BadPaddingException;
@@ -146,10 +151,7 @@ public class ServerThread extends Thread implements IConnectable {
         } catch (IOException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
         }
-        System.out.println("Sent packet: " + data.getType());
-        if (data.getType() == PacketType.ERROR) {
-            System.out.println("Error");
-        }
+        System.out.println("Sent packet: " + data.getType() + (data.getType() == PacketType.ERROR ? ": " + new String(data.getData(), StandardCharsets.UTF_8) : ""));
     }
 
     private String hashString(String str) {
@@ -245,64 +247,50 @@ public class ServerThread extends Thread implements IConnectable {
 
     private void addChat(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof ChatData) {
-                    ChatData chatData = (ChatData) o;
-                    if (chatData.getName() == null) {
-                        sendPacket(new PacketData(PacketType.ERROR, "Chat name must not be null".getBytes(StandardCharsets.UTF_8)));
-                    } else {
-                        int chatId;
-                        try {
-                            chatId = WeTellServer.getInstance().getSQLManager().addChat(chatData.getName());
-                        } catch (NullPointerException e) {
-                            sendPacket(new PacketData(PacketType.ERROR, "Something went wrong while creating a new chat.".getBytes(StandardCharsets.UTF_8)));
-                            return;
-                        }
+            ChatData chatData = Util.deserializeObject(ChatData.class, data);
+            if (chatData != null) {
+                if (chatData.getName() != null) {
+                    try {
+                        int chatId = WeTellServer.getInstance().getSQLManager().addChat(chatData.getName());
                         addUserToChat(new ContactData(chatId, userId));
-                        fetchChatData(chatId, chatData.getName());
+                        sendPacket(new PacketData(PacketType.FETCH_CHAT, Util.serializeObject(new ChatData(chatData.getName(), chatId))));
                         ByteBuffer buffer = ByteBuffer.allocate(4);
                         buffer.putInt(chatId);
                         sendPacket(new PacketData(PacketType.ADD_CHAT_SUCCESS, buffer.array()));
+                    } catch (NullPointerException e) {
+                        sendPacket(new PacketData(PacketType.ERROR, "Something went wrong while creating a new chat.".getBytes(StandardCharsets.UTF_8)));
                     }
+                } else {
+                    sendPacket(new PacketData(PacketType.ERROR, "Chat name must not be null".getBytes(StandardCharsets.UTF_8)));
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }
 
     private void addUserToChat(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof ContactData) {
-                    ContactData contactData = (ContactData) o;
-                    if (contactData.getChatId() == -1) {
-                        sendPacket(new PacketData(PacketType.ERROR, "Chat not specified.".getBytes(StandardCharsets.UTF_8)));
-                    } else if (contactData.getUserId() == -1) {
-                        sendPacket(new PacketData(PacketType.ERROR, "User not specified.".getBytes(StandardCharsets.UTF_8)));
-                    } else if (contactData.getUserId() == userId) {
-                        sendPacket(new PacketData(PacketType.ERROR, "User is this user.".getBytes(StandardCharsets.UTF_8)));
-                    } else {
-                        try {
-                            WeTellServer.getInstance().getSQLManager().addContact(contactData.getUserId(), contactData.getChatId());
-                            fetchChatDataForUser(contactData.getChatId(), contactData.getUserId());
-                        } catch (NullPointerException e) {
-                            sendPacket(new PacketData(PacketType.ERROR, "User is already in this chat.".getBytes(StandardCharsets.UTF_8)));
+            ContactData contactData = Util.deserializeObject(ContactData.class, data);
+            if (contactData != null) {
+                if (contactData.getChatId() == -1) {
+                    sendPacket(new PacketData(PacketType.ERROR, "Chat not specified.".getBytes(StandardCharsets.UTF_8)));
+                } else if (contactData.getUserId() == -1) {
+                    sendPacket(new PacketData(PacketType.ERROR, "User not specified.".getBytes(StandardCharsets.UTF_8)));
+                } else if (contactData.getUserId() == userId) {
+                    sendPacket(new PacketData(PacketType.ERROR, "User is this user.".getBytes(StandardCharsets.UTF_8)));
+                } else {
+                    try {
+                        WeTellServer.getInstance().getSQLManager().addContact(contactData.getUserId(), contactData.getChatId());
+                        // If there are other threads running with other users just added to the chat
+                        for (ServerThread thread : WeTellServer.getInstance().getThreads()) {
+                            if (thread.userId == contactData.getUserId()) {
+                                // send them a packet with the new chat
+                                thread.sendPacket(new PacketData(PacketType.FETCH_CHAT, Util.serializeObject(new ChatData(WeTellServer.getInstance().getSQLManager().getChatName(contactData.getChatId()), contactData.getUserId()))));
+                            }
                         }
+                    } catch (NullPointerException e) {
+                        sendPacket(new PacketData(PacketType.ERROR, "User is already in this chat.".getBytes(StandardCharsets.UTF_8)));
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -319,27 +307,18 @@ public class ServerThread extends Thread implements IConnectable {
 
     private void addMessage(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof MessageData) {
-                    MessageData messageData = (MessageData) o;
-                    if (messageData.getChatId() == -1) {
-                        sendPacket(new PacketData(PacketType.ERROR, "Chat not specified.".getBytes(StandardCharsets.UTF_8)));
-                    } else {
-                        try {
-                            String time = WeTellServer.getInstance().getSQLManager().newMessage(userId, messageData.getChatId(), messageData.getMsgContent());
-                            sendMessageToChat(new MessageData(userId, messageData.getChatId(), messageData.getMsgContent(), time));
-                        } catch (NullPointerException e) {
-                            sendPacket(new PacketData(PacketType.ERROR, "User is not in the chat.".getBytes(StandardCharsets.UTF_8)));
-                        }
+            MessageData messageData = Util.deserializeObject(MessageData.class, data);
+            if (messageData != null) {
+                if (messageData.getChatId() == -1) {
+                    sendPacket(new PacketData(PacketType.ERROR, "Chat not specified.".getBytes(StandardCharsets.UTF_8)));
+                } else {
+                    try {
+                        String time = WeTellServer.getInstance().getSQLManager().newMessage(userId, messageData.getChatId(), messageData.getMsgContent());
+                        sendMessageToChat(new MessageData(userId, messageData.getChatId(), messageData.getMsgContent(), time));
+                    } catch (NullPointerException e) {
+                        sendPacket(new PacketData(PacketType.ERROR, "User is not in the chat.".getBytes(StandardCharsets.UTF_8)));
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -349,15 +328,7 @@ public class ServerThread extends Thread implements IConnectable {
             try {
                 ArrayList<ChatData> chatData = WeTellServer.getInstance().getSQLManager().fetchChatsForUser(userId);
                 if (chatData.size() != 0) {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    try {
-                        ObjectOutputStream chatOS = new ObjectOutputStream(bos);
-                        chatOS.writeObject(chatData);
-                        chatOS.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    sendPacket(new PacketData(PacketType.FETCH_CHATS, bos.toByteArray()));
+                    sendPacket(new PacketData(PacketType.FETCH_CHATS, Util.serializeObject(chatData)));
                 }
             } catch (NullPointerException e) {
                 sendPacket(new PacketData(PacketType.ERROR, "An error occurred while reading the chat data.".getBytes(StandardCharsets.UTF_8)));
@@ -368,51 +339,11 @@ public class ServerThread extends Thread implements IConnectable {
     private void fetchMessages(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
             ByteBuffer chatIdWrapped = ByteBuffer.wrap(data);
-            ArrayList<MessageData> messageData = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
-            if (messageData.size() != 0) {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                try {
-                    ObjectOutputStream msgOS = new ObjectOutputStream(bos);
-                    msgOS.writeObject(messageData);
-                    msgOS.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                sendPacket(new PacketData(PacketType.FETCH_MSGS, bos.toByteArray()));
+            ArrayList<MessageData> messageDataArrayList = WeTellServer.getInstance().getSQLManager().fetchMessagesForChat(chatIdWrapped.getInt());
+            if (messageDataArrayList.size() != 0) {
+                sendPacket(new PacketData(PacketType.FETCH_MSGS, Util.serializeObject(messageDataArrayList)));
             }
         }
-    }
-
-    private void fetchChatDataForUser(int chatId, int userId) {
-        for (ServerThread thread : WeTellServer.getInstance().getThreads()) {
-            if (thread.userId == userId) {
-                thread.fetchChatData(chatId);
-            }
-        }
-    }
-
-    private void fetchChatData(int chatId) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream os = new ObjectOutputStream(bos);
-            os.writeObject(new ChatData(WeTellServer.getInstance().getSQLManager().getChatName(chatId), chatId));
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        sendPacket(new PacketData(PacketType.FETCH_CHAT, bos.toByteArray()));
-    }
-
-    private void fetchChatData(int chatId, String chatName) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream os = new ObjectOutputStream(bos);
-            os.writeObject(new ChatData(chatName, chatId));
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        sendPacket(new PacketData(PacketType.FETCH_CHAT, bos.toByteArray()));
     }
 
     private void sendMessageToChat(MessageData messageData) {
@@ -420,24 +351,12 @@ public class ServerThread extends Thread implements IConnectable {
             ArrayList<Integer> userIds = WeTellServer.getInstance().getSQLManager().getUsersInChat(messageData.getChatId());
             for (ServerThread thread : WeTellServer.getInstance().getThreads()) {
                 if (userIds.contains(thread.userId)) {
-                    fetchMessageData(messageData);
+                    sendPacket(new PacketData(PacketType.FETCH_MESSAGE, Util.serializeObject(messageData)));
                 }
             }
         } catch (NullPointerException e) {
             // Case: there are no users in the chat
             e.printStackTrace();
         }
-    }
-
-    private void fetchMessageData(MessageData messageData) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream os = new ObjectOutputStream(bos);
-            os.writeObject(messageData);
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        sendPacket(new PacketData(PacketType.FETCH_MESSAGE, bos.toByteArray()));
     }
 }

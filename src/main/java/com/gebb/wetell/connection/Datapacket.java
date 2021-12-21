@@ -1,5 +1,7 @@
-package com.gebb.wetell;
+package com.gebb.wetell.connection;
 
+import com.gebb.wetell.KeyPairManager;
+import com.gebb.wetell.dataclasses.PacketData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

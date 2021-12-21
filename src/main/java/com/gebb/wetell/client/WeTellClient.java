@@ -3,6 +3,11 @@ package com.gebb.wetell.client;
 import com.gebb.wetell.*;
 import com.gebb.wetell.client.gui.SceneManager;
 import com.gebb.wetell.client.gui.SceneType;
+import com.gebb.wetell.connection.Datapacket;
+import com.gebb.wetell.connection.DatapacketFilter;
+import com.gebb.wetell.connection.InvalidSignatureException;
+import com.gebb.wetell.connection.PacketType;
+import com.gebb.wetell.dataclasses.*;
 import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -155,32 +160,14 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     @Override
     public void onSendMessage(String content) {
         if (isLoggedInAndSecureConnection() && selectedChat != -1) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                ObjectOutputStream os = new ObjectOutputStream(bos);
-                os.writeObject(new MessageData(-1, selectedChat, content, null));
-                os.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            sendPacket(new PacketData(PacketType.MSG, bos.toByteArray()));
+            sendPacket(new PacketData(PacketType.MSG, Util.serializeObject(new MessageData(-1, selectedChat, content, null))));
         }
     }
 
     @Override
     public void onAddChat(String chatName) {
         if (isLoggedInAndSecureConnection()) {
-            if (isLoggedInAndSecureConnection()) {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                try {
-                    ObjectOutputStream os = new ObjectOutputStream(bos);
-                    os.writeObject(new ChatData(chatName, -1));
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                sendPacket(new PacketData(PacketType.ADD_CHAT, bos.toByteArray()));
-            }
+            sendPacket(new PacketData(PacketType.ADD_CHAT, Util.serializeObject(new ChatData(chatName, -1))));
         }
     }
 
@@ -195,15 +182,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     e.printStackTrace();
                 }
                 if (requestedUserId != -1) {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    try {
-                        ObjectOutputStream os = new ObjectOutputStream(bos);
-                        os.writeObject(new ContactData(chatId, requestedUserId));
-                        os.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    sendPacket(new PacketData(PacketType.ADD_USER_TO_CHAT, bos.toByteArray()));
+                    sendPacket(new PacketData(PacketType.ADD_USER_TO_CHAT, Util.serializeObject(new ContactData(chatId, requestedUserId))));
                 } // Else: user does not exist
             }).start();
         }
@@ -235,10 +214,10 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             case KEYREQUEST -> sendKey();
             case KEY_TRANSFER_SUCCESS -> serverReceivedKey = true;
             case ERROR -> System.err.println("An error occurred while communicating with the server: " + new String(data.getData(), StandardCharsets.UTF_8));
-            case FETCH_CHATS -> extractChatDataArray(data.getData());
-            case FETCH_CHAT -> extractChatData(data.getData());
-            case FETCH_MSGS -> extractMessageDataArray(data.getData());
-            case FETCH_MESSAGE -> extractMessageData(data.getData());
+            case FETCH_CHATS -> addChatDataArray(data.getData());
+            case FETCH_CHAT -> addChatData(data.getData());
+            case FETCH_MSGS -> addMessageDataArray(data.getData());
+            case FETCH_MESSAGE -> addMessageData(data.getData());
             case USER_ID -> userId = ByteBuffer.wrap(data.getData()).getInt();
             case LOGOUT -> {
                 isLoggedIn = false;
@@ -303,88 +282,52 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         }
     }
 
-    private void extractChatData(byte[] data) {
+    private void addChatData(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof ChatData) {
-                    ChatData chatData = (ChatData) o;
-                    sceneManager.addChatInformation(chatData.getName(), chatData.getId());
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+            ChatData chatData = Util.deserializeObject(ChatData.class, data);
+            if (chatData != null) {
+                sceneManager.addChatInformation(chatData.getName(), chatData.getId());
             }
         }
     }
 
-    private void extractChatDataArray(byte[] data) {
+    private void addChatDataArray(byte[] data) {
         if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof ArrayList) {
-                    ArrayList<?> chatData = (ArrayList<?>) o;
-                    for (Object chat : chatData) {
-                        if (chat instanceof ChatData) {
-                            ChatData c = (ChatData) chat;
-                            sceneManager.addChatInformation(c.getName(), c.getId());
+            ArrayList<?> chatDataArrayList = Util.deserializeObject(ArrayList.class, data);
+            if (chatDataArrayList != null) {
+                for (Object o: chatDataArrayList) {
+                    if (o instanceof ChatData) {
+                        ChatData chatData = (ChatData) o;
+                        sceneManager.addChatInformation(chatData.getName(), chatData.getId());
+                    }
+                }
+            }
+        }
+    }
+
+    private void addMessageDataArray(byte[] data) {
+        if (isLoggedInAndSecureConnection()) {
+            ArrayList<?> messageDataArrayList = Util.deserializeObject(ArrayList.class, data);
+            if (messageDataArrayList != null) {
+                for (Object o: messageDataArrayList) {
+                    if (o instanceof MessageData) {
+                        MessageData messageData = (MessageData) o;
+                        if (messageData.getChatId() == selectedChat) {
+                            sceneManager.addMessage(messageData.getMsgContent(), messageData.getSentByUserId() == userId);
                         }
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
         }
     }
 
-    private void extractMessageDataArray(byte[] data) {
-        if (isLoggedInAndSecureConnection()) {
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            try {
-                ObjectInputStream is = new ObjectInputStream(bis);
-                is.setObjectInputFilter(new DatapacketFilter());
-                Object o = is.readObject();
-                // Instanceof checks to stay safe
-                if (o instanceof ArrayList) {
-                    ArrayList<?> messageData = (ArrayList<?>) o;
-                    for (Object msg : messageData) {
-                        if (msg instanceof MessageData) {
-                            MessageData m = (MessageData) msg;
-                            if (selectedChat == m.getChatId()) {
-                                sceneManager.addMessage(m.getMsgContent(), m.getSentByUserId() == userId);
-                            }
-                        }
-                    }
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void extractMessageData(byte[] data) {
+    private void addMessageData(byte[] data) {
          if (isLoggedInAndSecureConnection()) {
-             ByteArrayInputStream bis = new ByteArrayInputStream(data);
-             try {
-                 ObjectInputStream is = new ObjectInputStream(bis);
-                 is.setObjectInputFilter(new DatapacketFilter());
-                 Object o = is.readObject();
-                 // Instanceof checks to stay safe
-                 if (o instanceof MessageData) {
-                     MessageData messageData = (MessageData) o;
-                     if (selectedChat == messageData.getChatId()) {
-                        sceneManager.addMessage(messageData.getMsgContent(), messageData.getSentByUserId() == userId);
-                     }
+             MessageData messageData = Util.deserializeObject(MessageData.class, data);
+             if (messageData != null) {
+                 if (selectedChat == messageData.getChatId()) {
+                     sceneManager.addMessage(messageData.getMsgContent(), messageData.getSentByUserId() == userId);
                  }
-             } catch (IOException | ClassNotFoundException e) {
-                 e.printStackTrace();
              }
          }
     }

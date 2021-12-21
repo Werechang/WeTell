@@ -1,4 +1,4 @@
-package com.gebb.wetell;
+package com.gebb.wetell.connection;
 
 import org.jetbrains.annotations.NotNull;
 

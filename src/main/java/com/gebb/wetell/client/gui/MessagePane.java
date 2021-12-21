@@ -159,7 +159,8 @@ public class MessagePane extends GridPane {
     }
 
     protected void removeAllChats() {
-        chatlist.getItems().remove(0, chatlist.getItems().size()-1);
+        chatlist.getItems().clear();
+        chats.clear();
     }
 
     protected void removeAllMessages() {

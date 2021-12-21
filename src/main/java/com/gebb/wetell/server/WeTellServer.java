@@ -1,7 +1,7 @@
 package com.gebb.wetell.server;
 
-import com.gebb.wetell.PacketData;
-import com.gebb.wetell.PacketType;
+import com.gebb.wetell.dataclasses.PacketData;
+import com.gebb.wetell.connection.PacketType;
 
 import java.io.IOException;
 import java.net.ServerSocket;

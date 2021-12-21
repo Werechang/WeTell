@@ -1,5 +1,9 @@
 package com.gebb.wetell;
 
+import com.gebb.wetell.connection.Datapacket;
+import com.gebb.wetell.connection.InvalidSignatureException;
+import com.gebb.wetell.connection.PacketType;
+import com.gebb.wetell.dataclasses.PacketData;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

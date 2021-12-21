@@ -1,4 +1,4 @@
-package com.gebb.wetell;
+package com.gebb.wetell.dataclasses;
 
 import java.io.Serial;
 import java.io.Serializable;

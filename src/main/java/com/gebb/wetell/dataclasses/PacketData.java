@@ -1,5 +1,6 @@
-package com.gebb.wetell;
+package com.gebb.wetell.dataclasses;
 
+import com.gebb.wetell.connection.PacketType;
 import org.jetbrains.annotations.NotNull;
 
 public class PacketData {

@@ -9,4 +9,6 @@ module com.gebb.wetell {
     exports com.gebb.wetell.client;
     exports com.gebb.wetell.server;
     exports com.gebb.wetell;
+    exports com.gebb.wetell.dataclasses;
+    exports com.gebb.wetell.connection;
 }

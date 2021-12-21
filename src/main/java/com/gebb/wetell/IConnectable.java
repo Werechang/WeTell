@@ -1,5 +1,7 @@
 package com.gebb.wetell;
 
+import com.gebb.wetell.dataclasses.PacketData;
+
 public interface IConnectable {
     /**
      * Executes specific things depending on the PacketType

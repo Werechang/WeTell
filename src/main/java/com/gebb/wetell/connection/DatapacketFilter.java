@@ -1,4 +1,4 @@
-package com.gebb.wetell;
+package com.gebb.wetell.connection;
 
 import java.io.ObjectInputFilter;
 
@@ -17,7 +17,7 @@ public class DatapacketFilter implements ObjectInputFilter {
         if (obj == null) {
             return ObjectInputFilter.Status.UNDECIDED;
         }
-        if (obj.getName().equals("com.gebb.wetell.Datapacket") || obj.getName().equals("java.util.ArrayList") || obj.getName().equals("[Ljava.lang.Object;") || obj.getName().equals("[B") || obj.getName().equals("com.gebb.wetell.MessageData") || obj.getName().equals("com.gebb.wetell.ChatData") || obj.getName().equals("com.gebb.wetell.ContactData")) {
+        if (obj.getName().equals("com.gebb.wetell.connection.Datapacket") || obj.getName().equals("java.util.ArrayList") || obj.getName().equals("[Ljava.lang.Object;") || obj.getName().equals("[B") || obj.getName().equals("com.gebb.wetell.dataclasses.MessageData") || obj.getName().equals("com.gebb.wetell.dataclasses.ChatData") || obj.getName().equals("com.gebb.wetell.dataclasses.ContactData")) {
             return ObjectInputFilter.Status.ALLOWED;
         }
         return ObjectInputFilter.Status.REJECTED;
