@@ -70,7 +70,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             try {
                 Socket socket = new Socket();
                 sceneManager.setDisconnected(true);
-                socket.connect(new InetSocketAddress("localhost", 80));
+                socket.connect(new InetSocketAddress("192.168.178.134", 80));
                 oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
                 oos.flush();
                 ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
