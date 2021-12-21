@@ -173,7 +173,7 @@ public class MessagePane extends GridPane {
     }
 
     protected void removeAllMessages() {
-        messageslist.getItems().remove(0, messageslist.getItems().size()-1);
+        messageslist.getItems().clear();
     }
 
     protected void resetInputAndFields() {

@@ -149,6 +149,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
 
     @Override
     public void onSelectChat(int chatId) {
+        sceneManager.clearMessageList();
         if (isLoggedInAndSecureConnection()) {
             selectedChat = chatId;
             ByteBuffer buffer = ByteBuffer.allocate(4);

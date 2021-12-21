@@ -89,6 +89,10 @@ public class SceneManager {
         Platform.runLater(messagePane::resetInputAndFields);
     }
 
+    public void clearMessageList() {
+        Platform.runLater(messagePane::removeAllMessages);
+    }
+
     public void setCurrentAddChatId(int id) {
         messagePane.setNewChatId(id);
     }
