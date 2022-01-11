@@ -9,10 +9,12 @@ public class ChatData implements Serializable {
 
     private final String name;
     private final int id;
+    private final String salt;
 
-    public ChatData(String name, int id) {
+    public ChatData(String name, int id, String salt) {
         this.name = name;
         this.id = id;
+        this.salt = salt;
     }
 
     public String getName() {
@@ -21,5 +23,9 @@ public class ChatData implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public String getSalt() {
+        return salt;
     }
 }

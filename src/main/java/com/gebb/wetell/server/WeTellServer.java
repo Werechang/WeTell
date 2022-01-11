@@ -18,6 +18,7 @@ public class WeTellServer extends ServerSocket {
     private static WeTellServer server = null;
     private final SQLManager sqlManager = new SQLManager("jdbc:sqlite:wetell.db");
     private Thread idleThread;
+    private boolean isOverrideHash = false;
 
     private final Queue<ServerThread> closeThreadQueue = new ConcurrentLinkedQueue<>();
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -96,6 +97,9 @@ public class WeTellServer extends ServerSocket {
                 sqlManager.createTables();
             } else if (Objects.equals(s, "r") || Objects.equals(s, "R")) {
                 System.out.println("Number of ServerThreads active: " + threads.size());
+            } else if (Objects.equals(s, "o") || Objects.equals(s, "O")) {
+                isOverrideHash = !isOverrideHash;
+                System.out.println("Override hashes " + (isOverrideHash ? "activated" : "deactivated"));
             }
         }
     }
@@ -134,5 +138,9 @@ public class WeTellServer extends ServerSocket {
 
     protected Collection<ServerThread> getThreads() {
         return threads.values();
+    }
+
+    protected boolean isOverrideHash() {
+        return isOverrideHash;
     }
 }

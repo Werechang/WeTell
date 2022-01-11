@@ -27,7 +27,9 @@ public enum PacketType {
     FETCH_CHAT(16),
     USER_ID(17),
     USERID_FROM_NAME(18),
-    ADD_CHAT_SUCCESS(19);
+    ADD_CHAT_SUCCESS(19),
+    CHAT_SALT(20),
+    USER_CHAT_SECRET(21);
 
     private final byte id;
 

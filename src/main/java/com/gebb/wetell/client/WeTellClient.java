@@ -15,15 +15,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -35,7 +36,6 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private ObjectInputStream ois;
     private KeyPair keyPair;
     private PublicKey serverKey = null;
-    private Thread listenThread;
     private boolean isWaitingForConnection;
     private boolean isCloseRequest;
     private boolean serverReceivedKey = false;
@@ -46,6 +46,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     private int userId = -1;
     private final CountDownLatch getUserIdWaiter = new CountDownLatch(1);
     private int requestedUserId = -1;
+    private byte[] userSecret = new byte[256];
 
     public static void main(String[] args) {
         launch(args);
@@ -101,7 +102,8 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     }
 
     private void listen() {
-        listenThread = new Thread(() -> {
+        // Check if connection got closed
+        new Thread(() -> {
             while (!isWaitingForConnection && !isCloseRequest) {
                 try {
                     Datapacket packet = (Datapacket) ois.readObject();
@@ -113,20 +115,26 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     e.printStackTrace();
                     // Check if connection got closed
                     if (e.getClass().getName().equals("java.io.EOFException") || e.getMessage().equals("Connection reset")) {
-                        connect();
+                        if (!isWaitingForConnection && !isCloseRequest) {
+                            connect();
+                        }
                     }
                 } catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException | InterruptedException | InvalidSignatureException e) {
                     e.printStackTrace();
                 }
             }
-        });
-        listenThread.start();
+        }).start();
     }
 
     @Override
     public void onLoginPress(String username, String password) {
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             return;
+        }
+        try {
+            userSecret = getUserSecret(username, password);
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
         sendPacket(new PacketData(PacketType.LOGIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
     }
@@ -135,6 +143,11 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     public void onSignInPress(String username, String password) {
         if (username == null || username.isEmpty() || password == null || password.isEmpty() || username.length() < 4 || password.length() < 4) {
             return;
+        }
+        try {
+            userSecret = getUserSecret(username, password);
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
         sendPacket(new PacketData(PacketType.SIGNIN, (username + "\00" + password).getBytes(StandardCharsets.UTF_8)));
     }
@@ -168,7 +181,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
     @Override
     public void onAddChat(String chatName) {
         if (isLoggedInAndSecureConnection()) {
-            sendPacket(new PacketData(PacketType.ADD_CHAT, Util.serializeObject(new ChatData(chatName, -1))));
+            sendPacket(new PacketData(PacketType.ADD_CHAT, Util.serializeObject(new ChatData(chatName, -1, null))));
         }
     }
 
@@ -226,6 +239,9 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 selectedChat = -1;
                 sceneManager.resetInputFields();
                 sceneManager.setScene(SceneType.LOGIN);
+                for (byte b: userSecret) {
+                    b = 0;
+                }
             }
             case USERID_FROM_NAME -> {
                 requestedUserId = ByteBuffer.wrap(data.getData()).getInt();
@@ -337,5 +353,48 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
         isCloseRequest = true;
         sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
         System.exit(0);
+    }
+
+    private byte[] encryptMessage(String message, SecretKey key) {
+        PBEKeySpec spec = new PBEKeySpec(message.toCharArray(), null, 65536, 256);
+        return null;
+    }
+
+    private String decryptMessage(byte[] message, SecretKey key) {
+        return null;
+    }
+
+    private byte[] getUserSecret(String username, String password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        SecureRandom random = new SecureRandom(password.getBytes(StandardCharsets.UTF_8));
+        byte[] seededRnd = new byte[16];
+        random.nextBytes(seededRnd);
+        PBEKeySpec spec = new PBEKeySpec(username.toCharArray(), seededRnd, 65536, 256);
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        return factory.generateSecret(spec).getEncoded();
+    }
+
+    private void generateNewChatKey() {
+        // Generating the password for the key (chat secret)
+        SecureRandom random = new SecureRandom();
+        byte[] chatSecret = new byte[256];
+        random.nextBytes(chatSecret);
+        // TODO Generate on server
+        byte[] salt = new byte[16];
+        random.nextBytes(salt);
+        try {
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            // String wrapping workaround to convert the byte[] into a char[]
+            PBEKeySpec spec = new PBEKeySpec(new String(chatSecret, StandardCharsets.UTF_8).toCharArray(), salt, 65536, 256);
+            SecretKey chatKey = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
+
+            // Calc for this user
+            byte[] userChatSecret = new byte[256];
+            for (int i = 0; i < 256; i++) {
+                userChatSecret[i] = (byte) (chatSecret[i] - userSecret[i]);
+            }
+            sendPacket(new PacketData(PacketType.USER_CHAT_SECRET, userChatSecret));
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
     }
 }

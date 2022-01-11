@@ -23,7 +23,7 @@ public class Util {
             ObjectInputStream is = new ObjectInputStream(bis);
             is.setObjectInputFilter(new DataClassFilter());
             Object o = is.readObject();
-            // If cast fails return null (Workaround for instanceof checks)
+            // If cast fails return null
             if (type.isInstance(o)) {
                 return type.cast(o);
             }

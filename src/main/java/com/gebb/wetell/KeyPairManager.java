@@ -2,6 +2,8 @@ package com.gebb.wetell;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -135,5 +137,19 @@ public class KeyPairManager {
             e.printStackTrace();
         }
         throw new UnknownError();
+    }
+
+    public static SecretKey generateAESKeyFromSeed(byte[] seed) {
+        if (seed == null) {
+            throw new NullPointerException();
+        }
+        try {
+            SecureRandom random = new SecureRandom(seed);
+            KeyGenerator generator = KeyGenerator.getInstance("AES");
+            generator.init(256, random);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

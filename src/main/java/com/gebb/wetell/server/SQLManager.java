@@ -2,6 +2,7 @@ package com.gebb.wetell.server;
 
 import com.gebb.wetell.dataclasses.ChatData;
 import com.gebb.wetell.dataclasses.MessageData;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ public class SQLManager {
 
     private Connection conn = null;
 
-    protected SQLManager(String path) {
+    protected SQLManager(@NotNull String path) {
         try {
             // create a connection to the database
             conn = DriverManager.getConnection(path);
@@ -76,7 +77,8 @@ public class SQLManager {
             String sql = "CREATE TABLE chats (" +
                     "id INTEGER PRIMARY KEY ASC, " +
                     "profile_pic TEXT, " +
-                    "name TEXT)";
+                    "name TEXT," +
+                    "salt TEXT)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
             System.out.println("Chats table successfully created.");
@@ -96,9 +98,23 @@ public class SQLManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        // Chat secrets + salt
+        try {
+            String sql = "CREATE TABLE secrets (" +
+                    "user_id INTEGER , " +
+                    "chat_id INTEGER , " +
+                    "user_chat_secret TEXT, " +
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE NO ACTION, " +
+                    "FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE NO ACTION);";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.executeUpdate();
+            System.out.println("Contacts table successfully created.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected int addUser(String username, String hashedPassword, String salt) {
+    protected int addUser(@NotNull String username, @NotNull String hashedPassword, @NotNull String salt) {
         String sqlq = "SELECT id FROM users WHERE name = ?";
         String sql = "INSERT INTO users(name,hashedPassword,salt) VALUES(?,?,?)";
         try {
@@ -124,11 +140,12 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected synchronized int addChat(String name) {
+    protected synchronized int addChat(@NotNull String name, @NotNull String salt) {
         try {
-            String sql = "INSERT INTO chats(name) VALUES(?)";
+            String sql = "INSERT INTO chats(name) VALUES(?, ?)";
             PreparedStatement statement = conn.prepareStatement(sql);
             statement.setString(1, name);
+            statement.setString(2, salt);
             statement.executeUpdate();
 
             String getId = "SELECT id FROM chats ORDER BY id DESC LIMIT 1";
@@ -160,7 +177,7 @@ public class SQLManager {
         }
     }
 
-    protected synchronized String newMessage(int sender_id, int chat_id, String msg_content) {
+    protected synchronized String newMessage(int sender_id, int chat_id, @NotNull String msg_content) {
         String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
         String getTime = "SELECT sent_at FROM messages ORDER BY id DESC LIMIT 1";
@@ -187,7 +204,20 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected int getUserId(String username) {
+    protected synchronized void overrideUserHash(@NotNull String username, @NotNull String hashedPassword, @NotNull String salt) {
+        String sql = "UPDATE users SET hashedPassword = ?, salt = ? WHERE name = ?";
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, hashedPassword);
+            pstmt.setString(2, salt);
+            pstmt.setString(3, username);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected int getUserId(@NotNull String username) {
         String sql = "SELECT id FROM users WHERE name = ?";
         try {
             PreparedStatement pstmtq = conn.prepareStatement(sql);
@@ -217,7 +247,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected synchronized UserData getUserData(String username) {
+    protected synchronized UserData getUserData(@NotNull String username) {
         String sql = "SELECT salt, hashedPassword FROM users WHERE name = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -232,14 +262,14 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected String getChatName(int chatId) {
-        String sql = "SELECT name FROM chats WHERE id = ?";
+    protected ChatData getChatInfo(int chatId) {
+        String sql = "SELECT name, salt FROM chats WHERE id = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, chatId);
             ResultSet result = pstmt.executeQuery();
             if (result.next()) {
-                return result.getString("name");
+                return new ChatData(result.getString("name"), chatId, result.getString("salt"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -266,9 +296,17 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ArrayList<MessageData> fetchMessagesForChat(int chat_id) {
+    protected ArrayList<MessageData> fetchMessagesForChat(int chat_id, int user_id) {
+        String sqlq = "SELECT chat_id FROM contacts WHERE user_id = ? AND chat_id = ?";
         String sql = "SELECT sender_id, msg_content, sent_at FROM messages WHERE chat_id = ? ORDER BY id DESC LIMIT 20";
         try {
+            PreparedStatement statement = conn.prepareStatement(sqlq);
+            statement.setInt(1, user_id);
+            statement.setInt(2, chat_id);
+            ResultSet set = statement.executeQuery();
+            if (!set.next()) {
+                throw new NullPointerException();
+            }
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, chat_id);
             ResultSet result = pstmt.executeQuery();
@@ -286,7 +324,7 @@ public class SQLManager {
     }
 
     protected ArrayList<ChatData> fetchChatsForUser(int user_id) {
-        String sql = "SELECT contacts.chat_id, chats.name FROM contacts " +
+        String sql = "SELECT contacts.chat_id, chats.name, chats.salt FROM contacts " +
                 "LEFT JOIN chats on contacts.chat_id = chats.id " +
                 "WHERE contacts.user_id = ?";
         try {
@@ -295,7 +333,7 @@ public class SQLManager {
             ResultSet result = pstmt.executeQuery();
             ArrayList<ChatData> temp = new ArrayList<>(20);
             while (result.next()) {
-                temp.add(new ChatData(result.getString("name"), result.getInt("chat_id")));
+                temp.add(new ChatData(result.getString("name"), result.getInt("chat_id"), result.getString("salt")));
             }
             return temp;
         } catch (SQLException e) {
