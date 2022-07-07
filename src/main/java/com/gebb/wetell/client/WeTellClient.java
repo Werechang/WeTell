@@ -71,7 +71,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
             try {
                 Socket socket = new Socket();
                 sceneManager.setDisconnected(true);
-                socket.connect(new InetSocketAddress("192.168.178.127", 24464));
+                socket.connect(new InetSocketAddress("91.65.20.81", 24464));
                 oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
                 oos.flush();
                 ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -88,7 +88,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                     new Thread(() -> {
                         while (isWaitingForConnection && !isCloseRequest) {
                             try {
-                                Thread.sleep(10000);
+                                Thread.sleep(5000);
                                 connect();
                             } catch (InterruptedException ex) {
                                 ex.printStackTrace();
@@ -237,6 +237,7 @@ public class WeTellClient extends Application implements IConnectable, IGUICalla
                 isLoggedIn = false;
                 userId = -1;
                 selectedChat = -1;
+                requestedUserId = -1;
                 sceneManager.resetInputFields();
                 sceneManager.setScene(SceneType.LOGIN);
                 for (byte b: userSecret) {

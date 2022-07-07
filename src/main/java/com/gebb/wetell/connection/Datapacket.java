@@ -23,15 +23,14 @@ import java.util.Arrays;
 public class Datapacket implements Serializable {
     @Serial
     private static final long serialVersionUID = -6234660021077765177L;
+    private transient static final int SIGNATURE_KEY_POS = 0;
+    private transient static final int SIGNATURE_HASH_POS = 1;
+    private transient static final int PACKET_TYPE_POS = 2;
+    private transient static final int DATA_POS = 3;
+    private transient static Cipher cipher;
 
     private final ArrayList<byte[]> encryptedData = new ArrayList<>(4);
     private final boolean isEncrypted;
-
-    private static Cipher cipher;
-    private static final int SIGNATURE_KEY_POS = 0;
-    private static final int SIGNATURE_HASH_POS = 1;
-    private static final int PACKET_TYPE_POS = 2;
-    private static final int DATA_POS = 3;
 
     static {
         try {

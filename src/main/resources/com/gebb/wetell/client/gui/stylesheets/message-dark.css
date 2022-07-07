@@ -1,0 +1,43 @@
+@font-face {
+    -fx-font-family: SegoeUI;
+}
+#newChat {
+    -fx-background-color: #fafbfc;
+    -fx-background-radius: 10 10 10 10;
+    -fx-border-radius: 10 10 10 10;
+    -fx-border-color: #bbbbbb;
+}
+#darkenRegion {
+    -fx-background-color: #111111bb;
+}
+.indexed-cell:odd {
+    -fx-background-color: #212427;
+}
+.indexed-cell:even {
+    -fx-background-color: #24272a;
+}
+.cell:selected {
+    -fx-background-color: #393c3f;
+}
+.list-view {
+    -fx-use-system-menu-bar: true;
+}
+.label {
+    -fx-text-fill: #c0c0c0;
+}
+.check-box {
+    -fx-text-fill: #c0c0c0;
+}
+.button {
+    -fx-text-fill: white;
+    -fx-background-color: #009aba;
+}
+.button:hover {
+    -fx-background-color: #00a4c4;
+}
+.button:pressed {
+    -fx-background-color: #007a9a;
+}
+.root {
+    -fx-background-color: #26292c;
+}

@@ -223,6 +223,7 @@ public class ServerThread extends Thread implements IConnectable {
                 if (ud.getHashedPassword().equals(hashString(usernamePassword[1] + ud.getSalt()))) {
                     userId = WeTellServer.getInstance().getSQLManager().getUserId(usernamePassword[0]);
                     sendPacket(new PacketData(PacketType.LOGIN_SUCCESS, usernamePassword[0].getBytes(StandardCharsets.UTF_8)));
+                    sendPacket(new PacketData(PacketType.USER_ID, ByteBuffer.allocate(4).putInt(userId).array()));
                 } else {
                     sendPacket(new PacketData(PacketType.ERROR, "Username or password is wrong.".getBytes(StandardCharsets.UTF_8)));
                 }
@@ -296,6 +297,7 @@ public class ServerThread extends Thread implements IConnectable {
         } else if (contactData.getUserId() == -1) {
             sendPacket(new PacketData(PacketType.ERROR, "User not specified.".getBytes(StandardCharsets.UTF_8)));
         } else if (contactData.getUserId() == userId) {
+            // TODO Same error when username wrong (user not existing)
             sendPacket(new PacketData(PacketType.ERROR, "User is this user.".getBytes(StandardCharsets.UTF_8)));
         } else {
             try {

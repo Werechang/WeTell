@@ -53,12 +53,12 @@ public class GUITest extends Application implements IGUICallable {
 
     @Override
     public void onSendMessage(String content) {
-
+        sceneManager.addMessage(content, true);
     }
 
     @Override
     public void onAddChat(String chatName) {
-
+        sceneManager.addChatInformation("Test", 0);
     }
 
     @Override

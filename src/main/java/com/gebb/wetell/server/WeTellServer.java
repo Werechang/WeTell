@@ -1,8 +1,9 @@
 package com.gebb.wetell.server;
 
-import com.gebb.wetell.dataclasses.PacketData;
 import com.gebb.wetell.connection.PacketType;
+import com.gebb.wetell.dataclasses.PacketData;
 
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -11,30 +12,44 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 
-public class WeTellServer extends ServerSocket {
+public class WeTellServer {
+    public static final ResourceManager rm = new ResourceManager();
 
     protected static boolean running = false;
-    private final HashMap<Long, ServerThread> threads = new HashMap<>();
-    private static WeTellServer server = null;
-    private final SQLManager sqlManager = new SQLManager("jdbc:sqlite:wetell.db");
-    private Thread idleThread;
-    private boolean isOverrideHash = false;
 
+    private static WeTellServer server = null;
+    private static RunArgumentsManager ram;
+
+    private final HashMap<Long, ServerThread> threads = new HashMap<>();
+    private final SQLManager sqlManager = new SQLManager("jdbc:sqlite:wetell.db");
+    private final ServerSocket serverSocket;
     private final Queue<ServerThread> closeThreadQueue = new ConcurrentLinkedQueue<>();
     private final CountDownLatch latch = new CountDownLatch(1);
+    private boolean isOverrideHash = false;
+    private Thread idleThread;
+
 
     public static void main(String[] args) {
+        ram = new RunArgumentsManager(args);
         try {
             server = new WeTellServer(24464);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        if (ram.getOption("ssl")) {
+            System.setProperty("javax.net.ssl.keyStore", rm.getInfo("sslCertPath"));
+            System.setProperty("javax.net.ssl.keyStorePassword", rm.getInfo("sslPassword"));
         }
         System.out.println("Starting server...");
         WeTellServer.getInstance().idle();
     }
 
     private WeTellServer(int port) throws IOException {
-        super(port);
+        if (ram.getOption("ssl")) {
+            serverSocket = SSLServerSocketFactory.getDefault().createServerSocket(port);
+        } else {
+            serverSocket = new ServerSocket(port);
+        }
     }
 
     private void idle() {
@@ -44,7 +59,7 @@ public class WeTellServer extends ServerSocket {
             while (running) {
                 try {
                     // Waiting to accept connection
-                    Socket socket = this.accept();
+                    Socket socket = serverSocket.accept();
                     if (running) {
                         ServerThread t = new ServerThread(socket);
                         threads.put(t.getId(), t);
@@ -109,10 +124,10 @@ public class WeTellServer extends ServerSocket {
             sqlManager.close();
             // Unblock wait for connection, kill that thread
             Socket s = new Socket();
-            s.connect(new InetSocketAddress("localhost", this.getLocalPort()), 2000);
+            s.connect(new InetSocketAddress("localhost", serverSocket.getLocalPort()), 2000);
             idleThread.join();
             // Kill every server thread
-            for (Map.Entry<Long, ServerThread> set: threads.entrySet()) {
+            for (Map.Entry<Long, ServerThread> set : threads.entrySet()) {
                 set.getValue().sendPacket(new PacketData(PacketType.CLOSE_CONNECTION));
                 set.getValue().join();
             }

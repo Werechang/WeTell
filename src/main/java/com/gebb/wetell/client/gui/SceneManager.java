@@ -5,8 +5,6 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class SceneManager {
@@ -55,7 +53,7 @@ public class SceneManager {
             });
             case MESSAGE -> Platform.runLater(() -> {
                 if (hasResources) {
-                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/login-dark.css")).toExternalForm());
+                    scene.getStylesheets().set(0, Objects.requireNonNull(SignInPane.class.getResource("stylesheets/message-dark.css")).toExternalForm());
                 }
                 scene.setRoot(messagePane);
             });
@@ -86,7 +84,7 @@ public class SceneManager {
     public void resetInputFields() {
         Platform.runLater(loginPane::resetInput);
         Platform.runLater(signInPane::resetInput);
-        Platform.runLater(messagePane::resetInputAndFields);
+        Platform.runLater(messagePane::resetInfo);
     }
 
     public void clearMessageList() {

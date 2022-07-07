@@ -3,6 +3,7 @@ package com.gebb.wetell.server;
 import com.gebb.wetell.dataclasses.ChatData;
 import com.gebb.wetell.dataclasses.MessageData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -108,7 +109,7 @@ public class SQLManager {
                     "FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE NO ACTION);";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.executeUpdate();
-            System.out.println("Contacts table successfully created.");
+            System.out.println("Secrets table successfully created.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -142,7 +143,7 @@ public class SQLManager {
 
     protected synchronized int addChat(@NotNull String name, @NotNull String salt) {
         try {
-            String sql = "INSERT INTO chats(name) VALUES(?, ?)";
+            String sql = "INSERT INTO chats(name, salt) VALUES(?, ?)";
             PreparedStatement statement = conn.prepareStatement(sql);
             statement.setString(1, name);
             statement.setString(2, salt);
@@ -157,7 +158,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected synchronized void addContact(int user_id, int chat_id) {
+    protected synchronized void addContact(@Range(from = 1, to = Integer.MAX_VALUE) int user_id, @Range(from = 1, to = Integer.MAX_VALUE) int chat_id) {
         String sqlq = "SELECT * FROM contacts WHERE user_id = ? AND chat_id = ?";
         String sql = "INSERT INTO contacts(user_id,chat_id) VALUES(?,?)";
         try {
@@ -177,7 +178,7 @@ public class SQLManager {
         }
     }
 
-    protected synchronized String newMessage(int sender_id, int chat_id, @NotNull String msg_content) {
+    protected synchronized String newMessage(@Range(from = 1, to = Integer.MAX_VALUE) int sender_id, @Range(from = 1, to = Integer.MAX_VALUE) int chat_id, @NotNull String msg_content) {
         String sqlq = "SELECT * FROM contacts WHERE chat_id = ? AND user_id = ?";
         String sql = "INSERT INTO messages(sender_id,chat_id,msg_content,sent_at) VALUES(?,?,?,(SELECT datetime('now', 'localtime')))";
         String getTime = "SELECT sent_at FROM messages ORDER BY id DESC LIMIT 1";
@@ -232,7 +233,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected String getUsername(int userId) {
+    protected String getUsername(@Range(from = 1, to = Integer.MAX_VALUE) int userId) {
         String sql = "SELECT name FROM users WHERE id = ?";
         try {
             PreparedStatement pstmtq = conn.prepareStatement(sql);
@@ -262,7 +263,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ChatData getChatInfo(int chatId) {
+    protected ChatData getChatInfo(@Range(from = 1, to = Integer.MAX_VALUE) int chatId) {
         String sql = "SELECT name, salt FROM chats WHERE id = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -277,7 +278,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ArrayList<Integer> getUsersInChat(int chatId) {
+    protected ArrayList<Integer> getUsersInChat(@Range(from = 1, to = Integer.MAX_VALUE) int chatId) {
         String sql = "SELECT user_id FROM contacts WHERE chat_id = ?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -296,7 +297,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ArrayList<MessageData> fetchMessagesForChat(int chat_id, int user_id) {
+    protected ArrayList<MessageData> fetchMessagesForChat(@Range(from = 1, to = Integer.MAX_VALUE) int chat_id, @Range(from = 1, to = Integer.MAX_VALUE) int user_id) {
         String sqlq = "SELECT chat_id FROM contacts WHERE user_id = ? AND chat_id = ?";
         String sql = "SELECT sender_id, msg_content, sent_at FROM messages WHERE chat_id = ? ORDER BY id DESC LIMIT 20";
         try {
@@ -323,7 +324,7 @@ public class SQLManager {
         throw new NullPointerException();
     }
 
-    protected ArrayList<ChatData> fetchChatsForUser(int user_id) {
+    protected ArrayList<ChatData> fetchChatsForUser(@Range(from = 1, to = Integer.MAX_VALUE) int user_id) {
         String sql = "SELECT contacts.chat_id, chats.name, chats.salt FROM contacts " +
                 "LEFT JOIN chats on contacts.chat_id = chats.id " +
                 "WHERE contacts.user_id = ?";
